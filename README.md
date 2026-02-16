@@ -33,8 +33,8 @@ docker compose up -d
 ```
 
 This starts:
-- **PostgreSQL** on port `5432`
-- **MinIO** on port `9000` (API) and `9001` (Console)
+- **PostgreSQL** on port `5435`
+- **MinIO** on port `9010` (API) and `9011` (Console)
 
 ### 4. Run the development server
 
@@ -96,9 +96,9 @@ src/
 
 | Service | Port | Credentials |
 |---------|------|-------------|
-| PostgreSQL | 5432 | `postgres` / `postgres` |
-| MinIO API | 9000 | `minioadmin` / `minioadmin` |
-| MinIO Console | 9001 | `minioadmin` / `minioadmin` |
+| PostgreSQL | 5435 | `postgres` / `postgres` |
+| MinIO API | 9010 | `minioadmin` / `minioadmin` |
+| MinIO Console | 9011 | `minioadmin` / `minioadmin` |
 
 ## Tech Stack
 
