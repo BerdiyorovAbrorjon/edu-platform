@@ -3,17 +3,35 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Loader2,
   BookOpen,
   Play,
   RotateCcw,
+  ClipboardCheck,
+  MessageSquare,
+  GraduationCap,
+  Check,
+  Lock,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LessonStepper } from "@/components/student/lesson-stepper";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface LessonOverview {
   id: string;
@@ -29,19 +47,47 @@ interface Progress {
   completedAt: string | null;
 }
 
-const STEP_ROUTES: Record<number, string> = {
-  1: "initial-test",
-  2: "lectures",
-  3: "situational",
-  4: "final-test",
-};
+const STEPS = [
+  {
+    step: 1,
+    label: "Dastlabki Test",
+    description: "Bilimingizni tekshirish",
+    icon: ClipboardCheck,
+    route: "initial-test",
+  },
+  {
+    step: 2,
+    label: "Maruzalar",
+    description: "Yangi bilimlarni o'rganish",
+    icon: BookOpen,
+    route: "lectures",
+  },
+  {
+    step: 3,
+    label: "Vaziyatli Savol-Javob",
+    description: "Amaliy vaziyatlarni tahlil qilish",
+    icon: MessageSquare,
+    route: "situational",
+  },
+  {
+    step: 4,
+    label: "Yakuniy Test",
+    description: "O'zlashtirishni baholash",
+    icon: GraduationCap,
+    route: "final-test",
+  },
+];
 
-const STEP_LABELS: Record<number, string> = {
-  1: "Dastlabki Testni boshlash",
-  2: "Maruzalarni ko'rish",
-  3: "Vaziyatli savollarni boshlash",
-  4: "Yakuniy Testni boshlash",
-};
+function getStepStatus(
+  step: number,
+  currentStep: number,
+  isCompleted: boolean
+): "completed" | "current" | "locked" {
+  if (isCompleted) return "completed";
+  if (step < currentStep) return "completed";
+  if (step === currentStep) return "current";
+  return "locked";
+}
 
 export default function LessonOverviewPage() {
   const params = useParams<{ id: string }>();
@@ -50,11 +96,11 @@ export default function LessonOverviewPage() {
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [restarting, setRestarting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch lesson details and progress in parallel
       const [lessonRes, progressRes] = await Promise.all([
         fetch(`/api/lessons/${params.id}`),
         fetch(`/api/student/lessons/${params.id}/progress`),
@@ -90,15 +136,29 @@ export default function LessonOverviewPage() {
   const isCompleted = !!progress?.completedAt;
   const activeStep = isCompleted ? 4 : currentStep === 0 ? 1 : currentStep;
 
-  const handleStepClick = (step: number) => {
-    const route = STEP_ROUTES[step];
-    if (route) {
-      router.push(`/student/lessons/${params.id}/${route}`);
-    }
+  const handleStepClick = (route: string) => {
+    router.push(`/student/lessons/${params.id}/${route}`);
   };
 
-  const handleContinue = () => {
-    handleStepClick(activeStep);
+  const handleRestart = async () => {
+    setRestarting(true);
+    try {
+      const res = await fetch(`/api/student/lessons/${params.id}/restart`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Qayta boshlashda xatolik");
+      }
+
+      toast.success("Dars qayta boshlandi!");
+      setProgress({ currentStep: 0, completedAt: null });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Xatolik yuz berdi");
+    } finally {
+      setRestarting(false);
+    }
   };
 
   if (loading) {
@@ -122,22 +182,6 @@ export default function LessonOverviewPage() {
     );
   }
 
-  const initialTest = lesson.tests.find((t) => t.type === "INITIAL");
-  const finalTest = lesson.tests.find((t) => t.type === "FINAL");
-
-  const stats = [
-    {
-      label: "Dastlabki test savollari",
-      value: (initialTest?.questions as unknown[])?.length ?? 0,
-    },
-    { label: "Maruzalar", value: lesson.lectures.length },
-    { label: "Vaziyatli savollar", value: lesson.situationalQA.length },
-    {
-      label: "Yakuniy test savollari",
-      value: (finalTest?.questions as unknown[])?.length ?? 0,
-    },
-  ];
-
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
@@ -160,75 +204,153 @@ export default function LessonOverviewPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-lg border bg-card px-4 py-3 text-center"
-          >
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-          </div>
-        ))}
+      {/* Vertical step cards */}
+      <div className="space-y-3">
+        {STEPS.map((s, idx) => {
+          const status = getStepStatus(s.step, activeStep, isCompleted);
+          const Icon = s.icon;
+          const isLocked = status === "locked";
+
+          return (
+            <Card
+              key={s.step}
+              className={cn(
+                "transition-all",
+                isLocked && "opacity-50 cursor-not-allowed",
+                !isLocked && "hover:shadow-md cursor-pointer",
+                status === "current" && "border-blue-300 ring-1 ring-blue-100",
+                status === "completed" && "border-green-200"
+              )}
+              onClick={() => {
+                if (!isLocked) handleStepClick(s.route);
+              }}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div
+                  className={cn(
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                    status === "completed" &&
+                      "border-green-500 bg-green-50 text-green-600",
+                    status === "current" &&
+                      "border-blue-500 bg-blue-50 text-blue-600",
+                    status === "locked" &&
+                      "border-muted bg-muted/50 text-muted-foreground"
+                  )}
+                >
+                  {status === "completed" ? (
+                    <Check className="h-5 w-5" />
+                  ) : status === "locked" ? (
+                    <Lock className="h-4 w-4" />
+                  ) : (
+                    <Icon className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      status === "completed" && "text-green-700",
+                      status === "current" && "text-blue-700",
+                      status === "locked" && "text-muted-foreground"
+                    )}
+                  >
+                    {s.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {s.description}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "shrink-0 text-xs",
+                    status === "completed" &&
+                      "bg-green-50 text-green-700 border-green-200",
+                    status === "current" &&
+                      "bg-blue-50 text-blue-700 border-blue-200",
+                    status === "locked" && "text-muted-foreground"
+                  )}
+                >
+                  {status === "completed"
+                    ? "Tugatilgan"
+                    : status === "current"
+                    ? "Hozirgi"
+                    : "Qulflangan"}
+                </Badge>
+                {/* Connector */}
+                {idx < STEPS.length - 1 && (
+                  <div className="hidden" />
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Stepper */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dars bosqichlari</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LessonStepper
-            currentStep={activeStep}
-            completedAt={isCompleted}
-            onStepClick={handleStepClick}
-          />
-        </CardContent>
-      </Card>
-
       {/* Action buttons */}
-      <div className="flex items-center gap-3">
-        <Button onClick={handleContinue} size="lg" className="gap-2">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button
+          onClick={() => handleStepClick(STEPS.find((s) => s.step === activeStep)?.route ?? "initial-test")}
+          size="lg"
+          className="gap-2"
+        >
           <Play className="h-4 w-4" />
           {isCompleted
             ? "Ko'rib chiqish"
             : currentStep === 0
             ? "Darsni boshlash"
-            : STEP_LABELS[activeStep]}
+            : "Davom ettirish"}
         </Button>
         {isCompleted && (
-          <Button variant="outline" size="lg" className="gap-2" disabled>
-            <RotateCcw className="h-4 w-4" />
-            Boshidan boshlash
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2"
+              asChild
+            >
+              <Link href={`/student/lessons/${params.id}/results`}>
+                <Trophy className="h-4 w-4" />
+                Natijalarni Ko&apos;rish
+              </Link>
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="gap-2"
+                  disabled={restarting}
+                >
+                  {restarting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" />
+                  )}
+                  Qayta Boshlash
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Darsni qayta boshlashni tasdiqlaysizmi?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Barcha test natijalari, vaziyatli savol javoblari va
+                    ilgarilash o&apos;chiriladi. Bu amalni qaytarib bo&apos;lmaydi.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleRestart}>
+                    Qayta boshlash
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
       </div>
-
-      {/* Lesson content summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Dars tarkibi
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {lesson.lectures.map((lecture, idx) => (
-              <div
-                key={lecture.id}
-                className="flex items-center gap-3 rounded-md border px-3 py-2"
-              >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                  {idx + 1}
-                </span>
-                <span className="text-sm">{lecture.title}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

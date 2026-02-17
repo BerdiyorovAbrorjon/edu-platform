@@ -24,6 +24,7 @@ export async function GET(
 interface AnswerInput {
   text: string;
   conclusion: string;
+  score: number;
 }
 
 interface QAInput {
@@ -89,6 +90,12 @@ export async function POST(
             { status: 400 }
           );
         }
+        if (typeof a.score !== "number" || !Number.isInteger(a.score) || a.score < 0 || a.score > 5) {
+          return NextResponse.json(
+            { error: `Question ${i + 1}, Answer ${j + 1}: score must be an integer between 0 and 5` },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -121,6 +128,7 @@ export async function POST(
           answers: qa.answers.map((a) => ({
             text: a.text.trim(),
             conclusion: a.conclusion.trim(),
+            score: a.score,
           })),
           order: qa.order ?? index + 1,
         };

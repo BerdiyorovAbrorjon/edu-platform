@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-type Answer = { text: string; conclusion: string };
+type Answer = { text: string; conclusion: string; score: number };
 
 type SituationalQuestion = {
   _key: string;
@@ -93,8 +93,8 @@ function emptyQuestion(order: number): SituationalQuestion {
     _key: nextKey(),
     question: "",
     answers: [
-      { text: "", conclusion: "" },
-      { text: "", conclusion: "" },
+      { text: "", conclusion: "", score: 0 },
+      { text: "", conclusion: "", score: 0 },
     ],
     order,
   };
@@ -117,8 +117,8 @@ function SortableQuestion({
   onUpdateAnswer: (
     questionIndex: number,
     answerIndex: number,
-    field: "text" | "conclusion",
-    value: string
+    field: "text" | "conclusion" | "score",
+    value: string | number
   ) => void;
   onAddAnswer: (questionIndex: number) => void;
   onRemoveAnswer: (questionIndex: number, answerIndex: number) => void;
@@ -316,6 +316,26 @@ function SortableQuestion({
                                 </p>
                               )}
                             </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs text-muted-foreground">
+                                Ball (0-5)
+                              </Label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={5}
+                                value={answer.score}
+                                onChange={(e) =>
+                                  onUpdateAnswer(
+                                    index,
+                                    aIdx,
+                                    "score",
+                                    Math.max(0, Math.min(5, parseInt(e.target.value) || 0))
+                                  )
+                                }
+                                className="w-20"
+                              />
+                            </div>
                           </div>
                           {question.answers.length > 2 && (
                             <Button
@@ -414,7 +434,7 @@ export function SituationalQABuilder({ lessonId }: SituationalQABuilderProps) {
     setQuestions((prev) =>
       prev.map((q, i) =>
         i === questionIndex
-          ? { ...q, answers: [...q.answers, { text: "", conclusion: "" }] }
+          ? { ...q, answers: [...q.answers, { text: "", conclusion: "", score: 0 }] }
           : q
       )
     );
@@ -433,8 +453,8 @@ export function SituationalQABuilder({ lessonId }: SituationalQABuilderProps) {
   const updateAnswer = (
     questionIndex: number,
     answerIndex: number,
-    field: "text" | "conclusion",
-    value: string
+    field: "text" | "conclusion" | "score",
+    value: string | number
   ) => {
     setQuestions((prev) =>
       prev.map((q, i) =>
@@ -448,17 +468,19 @@ export function SituationalQABuilder({ lessonId }: SituationalQABuilderProps) {
           : q
       )
     );
-    const errorField = field === "text" ? "answerText" : "answerConclusion";
-    setErrors((prev) =>
-      prev.filter(
-        (e) =>
-          !(
-            e.questionIndex === questionIndex &&
-            e.field === errorField &&
-            e.answerIndex === answerIndex
-          )
-      )
-    );
+    if (field === "text" || field === "conclusion") {
+      const errorField = field === "text" ? "answerText" : "answerConclusion";
+      setErrors((prev) =>
+        prev.filter(
+          (e) =>
+            !(
+              e.questionIndex === questionIndex &&
+              e.field === errorField &&
+              e.answerIndex === answerIndex
+            )
+        )
+      );
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {

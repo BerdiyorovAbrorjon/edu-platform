@@ -7,11 +7,29 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResultsViewer } from "@/components/student/results-viewer";
 
+interface QuestionBreakdown {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  userAnswer: number;
+  isCorrect: boolean;
+}
+
 interface TestResult {
   score: number;
   correctCount: number;
   totalQuestions: number;
   completedAt: string;
+  questionBreakdown: QuestionBreakdown[] | null;
+}
+
+interface SituationalResult {
+  id: string;
+  question: string;
+  answers: { text: string; conclusion: string; score: number }[];
+  order: number;
+  selectedAnswerIndex: number | null;
+  score: number | null;
 }
 
 interface ResultsData {
@@ -19,6 +37,7 @@ interface ResultsData {
   progress: { currentStep: number; completedAt: string | null } | null;
   initialResult: TestResult | null;
   finalResult: TestResult | null;
+  situationalResults: SituationalResult[];
 }
 
 export default function ResultsPage() {
@@ -87,6 +106,7 @@ export default function ResultsPage() {
       initialResult={data.initialResult}
       finalResult={data.finalResult}
       completedAt={data.progress.completedAt}
+      situationalResults={data.situationalResults}
     />
   );
 }

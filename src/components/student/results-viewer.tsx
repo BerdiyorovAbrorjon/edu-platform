@@ -19,18 +19,40 @@ import {
   Trophy,
   Target,
   BarChart3,
+  CheckCircle2,
+  XCircle,
+  Star,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { cn, getScoreColor } from "@/lib/utils";
+
+interface QuestionBreakdown {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  userAnswer: number;
+  isCorrect: boolean;
+}
 
 interface TestResult {
   score: number;
   correctCount: number;
   totalQuestions: number;
   completedAt: string;
+  questionBreakdown?: QuestionBreakdown[] | null;
+}
+
+interface SituationalResult {
+  id: string;
+  question: string;
+  answers: { text: string; conclusion: string; score: number }[];
+  order: number;
+  selectedAnswerIndex: number | null;
+  score: number | null;
 }
 
 interface ResultsViewerProps {
@@ -38,13 +60,17 @@ interface ResultsViewerProps {
   initialResult: TestResult | null;
   finalResult: TestResult | null;
   completedAt: string | null;
+  situationalResults?: SituationalResult[];
 }
+
+const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
 
 export function ResultsViewer({
   lesson,
   initialResult,
   finalResult,
   completedAt,
+  situationalResults,
 }: ResultsViewerProps) {
   const initialScore = initialResult?.score ?? 0;
   const finalScore = finalResult?.score ?? 0;
@@ -54,15 +80,15 @@ export function ResultsViewer({
     improvement > 0
       ? `+${Math.round(improvement)} ball yaxshilandi`
       : improvement === 0
-      ? "Natija bir xil"
-      : `${Math.round(improvement)} ball kamaydi`;
+        ? "Natija bir xil"
+        : `${Math.round(improvement)} ball kamaydi`;
 
   const encouragement =
     improvement > 0
       ? "Siz ajoyib natijaga erishdingiz!"
       : improvement === 0
-      ? "Doimiy natija — yaxshi ish!"
-      : "Siz darsni muvaffaqiyatli tugatdingiz!";
+        ? "Doimiy natija — yaxshi ish!"
+        : "Siz darsni muvaffaqiyatli tugatdingiz!";
 
   const chartData = [
     { name: "Dastlabki", score: Math.round(initialScore) },
@@ -71,11 +97,19 @@ export function ResultsViewer({
 
   const completionDate = completedAt
     ? new Date(completedAt).toLocaleDateString("uz-UZ", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
     : "";
+
+  // Situational QA total score
+  const situationalTotalScore = situationalResults
+    ? situationalResults.reduce((sum, r) => sum + (r.score ?? 0), 0)
+    : 0;
+  const situationalMaxScore = situationalResults
+    ? situationalResults.length * 5
+    : 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -126,8 +160,8 @@ export function ResultsViewer({
               improvement > 0
                 ? "bg-green-100"
                 : improvement === 0
-                ? "bg-gray-100"
-                : "bg-red-100"
+                  ? "bg-gray-100"
+                  : "bg-red-100"
             )}
           >
             {improvement > 0 ? (
@@ -144,8 +178,8 @@ export function ResultsViewer({
               improvement > 0
                 ? "text-green-700"
                 : improvement === 0
-                ? "text-gray-600"
-                : "text-red-700"
+                  ? "text-gray-600"
+                  : "text-red-700"
             )}
           >
             {improvement > 0 ? "+" : ""}
@@ -233,8 +267,8 @@ export function ResultsViewer({
                 improvement > 0
                   ? "text-green-700"
                   : improvement === 0
-                  ? "text-gray-700"
-                  : "text-red-700"
+                    ? "text-gray-700"
+                    : "text-red-700"
               )}
             >
               {improvement > 0 ? "+" : ""}
@@ -254,6 +288,154 @@ export function ResultsViewer({
           </CardContent>
         </Card>
       </div>
+
+      {/* Per-question breakdown: Initial Test */}
+      {initialResult?.questionBreakdown && initialResult.questionBreakdown.length > 0 && (
+        <>
+          <Separator />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-blue-500" />
+                Dastlabki Test — Savol bo&apos;yicha natijalar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {initialResult.questionBreakdown.map((q, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "flex items-start gap-3 rounded-lg border p-3",
+                    q.isCorrect ? "border-green-200 bg-green-50/30" : "border-red-200 bg-red-50/30"
+                  )}
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {q.isCorrect ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">
+                      {idx + 1}. {q.question}
+                    </p>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      <span>
+                        Sizning javob: <strong>{q.options[q.userAnswer]}</strong>
+                      </span>
+                      {!q.isCorrect && (
+                        <span className="ml-3">
+                          To&apos;g&apos;ri javob: <strong className="text-green-700">{q.options[q.correctAnswer]}</strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* Per-question breakdown: Final Test */}
+      {finalResult?.questionBreakdown && finalResult.questionBreakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-green-500" />
+              Yakuniy Test — Savol bo&apos;yicha natijalar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {finalResult.questionBreakdown.map((q, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  "flex items-start gap-3 rounded-lg border p-3",
+                  q.isCorrect ? "border-green-200 bg-green-50/30" : "border-red-200 bg-red-50/30"
+                )}
+              >
+                <div className="shrink-0 mt-0.5">
+                  {q.isCorrect ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">
+                    {idx + 1}. {q.question}
+                  </p>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    <span>
+                      Sizning javob: <strong>{q.options[q.userAnswer]}</strong>
+                    </span>
+                    {!q.isCorrect && (
+                      <span className="ml-3">
+                        To&apos;g&apos;ri javob: <strong className="text-green-700">{q.options[q.correctAnswer]}</strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Situational QA Results */}
+      {situationalResults && situationalResults.length > 0 && (
+        <>
+          <Separator />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Vaziyatli savollar natijalari
+                </CardTitle>
+                <Badge variant="outline" className="gap-1">
+                  <Star className="h-3 w-3" />
+                  {situationalTotalScore}/{situationalMaxScore} ball
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {situationalResults.map((qa, idx) => {
+                const selectedAnswer =
+                  qa.selectedAnswerIndex !== null
+                    ? qa.answers[qa.selectedAnswerIndex]
+                    : null;
+                return (
+                  <div
+                    key={qa.id}
+                    className="rounded-lg border p-3 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium">
+                        {idx + 1}. {qa.question}
+                      </p>
+                      {qa.score !== null && (
+                        <Badge className={cn("shrink-0 text-xs", getScoreColor(qa.score))}>
+                          {qa.score}/5
+                        </Badge>
+                      )}
+                    </div>
+                    {selectedAnswer && (
+                      <div className="text-xs text-muted-foreground">
+                        <span>
+                          Javob: <strong>{OPTION_LABELS[qa.selectedAnswerIndex!]}</strong> — {selectedAnswer.text}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Separator />
 

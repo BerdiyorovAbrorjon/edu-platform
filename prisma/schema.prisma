@@ -30,11 +30,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  createdLessons Lesson[]          @relation("CreatedLessons")
-  progress       StudentProgress[]
-  testResults    TestResult[]
+  accounts              Account[]
+  sessions              Session[]
+  createdLessons        Lesson[]               @relation("CreatedLessons")
+  progress              StudentProgress[]
+  testResults           TestResult[]
+  situationalQAResults  SituationalQAResult[]
 }
 
 model Account {
@@ -83,11 +84,12 @@ model Lesson {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  createdBy     User              @relation("CreatedLessons", fields: [createdById], references: [id])
-  tests         Test[]
-  lectures      Lecture[]
-  situationalQA SituationalQA[]
-  progress      StudentProgress[]
+  createdBy             User                   @relation("CreatedLessons", fields: [createdById], references: [id])
+  tests                 Test[]
+  lectures              Lecture[]
+  situationalQA         SituationalQA[]
+  progress              StudentProgress[]
+  situationalQAResults  SituationalQAResult[]
 }
 
 model Test {
@@ -118,10 +120,11 @@ model SituationalQA {
   id       String @id @default(cuid())
   lessonId String
   question String
-  answers  Json   // Array of { text: string, conclusion: string }
+  answers  Json   // Array of { text: string, conclusion: string, score: number (0-5) }
   order    Int
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson  Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  results SituationalQAResult[]
 }
 
 model StudentProgress {
@@ -147,4 +150,20 @@ model TestResult {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model SituationalQAResult {
+  id                  String   @id @default(cuid())
+  userId              String
+  lessonId            String
+  situationalQAId     String
+  selectedAnswerIndex Int
+  score               Int      // 0-5
+  answeredAt          DateTime @default(now())
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson         Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  situationalQA  SituationalQA @relation(fields: [situationalQAId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, situationalQAId])
 }

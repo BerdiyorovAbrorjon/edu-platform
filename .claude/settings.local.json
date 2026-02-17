@@ -5,7 +5,9 @@
       "Bash(TMPDIR=/tmp npm install:*)",
       "Bash(TMPDIR=/tmp npx shadcn@latest add:*)",
       "Bash(TMPDIR=/tmp npx prisma db seed:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

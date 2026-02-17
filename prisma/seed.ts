@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Clean existing data (in correct order for foreign keys)
+  await prisma.situationalQAResult.deleteMany();
   await prisma.testResult.deleteMany();
   await prisma.studentProgress.deleteMany();
   await prisma.situationalQA.deleteMany();
@@ -182,16 +183,19 @@ document.querySelector(".tugma").addEventListener("click", () => {
             text: "Darhol CSS yozishni boshlash",
             conclusion:
               "CSSni tuzilmasiz boshlash tartibsiz kodga olib keladi. Avval HTML tuzilishini rejalashtirish muhim.",
+            score: 2,
           },
           {
             text: "HTML tuzilishini va semantik joylashuvni rejalashtirish",
             conclusion:
               "To'g'ri! Semantik HTML tuzilishini avval rejalashtirish stilizatsiya va qulaylik uchun mustahkam asos yaratadi.",
+            score: 5,
           },
           {
             text: "JavaScript framework tanlash",
             conclusion:
               "Oddiy landing sahifa uchun framework kerak bo'lmasligi mumkin. Asoslardan boshlang va murakkablikni kerak bo'lganda qo'shing.",
+            score: 1,
           },
         ],
         order: 1,
@@ -205,21 +209,25 @@ document.querySelector(".tugma").addEventListener("click", () => {
             text: "Serverga ko'proq RAM qo'shish",
             conclusion:
               "Server resurslarini ko'paytirish vaqtinchalik yechim. Avval muammoning asl sababini aniqlash kerak — rasmlar, CSS, JavaScript fayllari katta bo'lishi mumkin.",
+            score: 2,
           },
           {
             text: "Chrome DevTools Network tabini ochib, qaysi resurslar sekin yuklanayotganini tekshirish",
             conclusion:
               "Ajoyib yondashuv! Network tab orqali qaysi fayllar katta ekanini, qaysi so'rovlar sekin javob berayotganini aniqlash mumkin. Bu optimizatsiya uchun to'g'ri yo'l.",
+            score: 5,
           },
           {
             text: "Butun saytni qayta yozish",
             conclusion:
               "Saytni qayta yozish ko'p vaqt talab qiladi. Avval mavjud muammolarni aniqlash va maqsadli optimizatsiyalar qilish samaraliroq.",
+            score: 0,
           },
           {
             text: "CDN ulash",
             conclusion:
               "CDN yaxshi yechim bo'lishi mumkin, lekin avval muammoning sababini bilish kerak. CDN faqat statik fayllar uchun yordam beradi.",
+            score: 3,
           },
         ],
         order: 2,
@@ -398,16 +406,19 @@ function Counter() {
             text: "Har birini alohida yozib ketaveraman",
             conclusion:
               "Kodni takrorlash xatoliklarga olib keladi va qo'llab-quvvatlashni qiyinlashtiradi. DRY (Don't Repeat Yourself) printsipiga amal qiling.",
+            score: 1,
           },
           {
             text: "Qayta ishlatiluvchi (reusable) komponentlar yarataman",
             conclusion:
               "Ajoyib! Qayta ishlatiluvchi komponentlar yaratish React-ning asosiy kuchli tomonlaridan biri. Props orqali komponentni moslashuvchan qilish mumkin.",
+            score: 5,
           },
           {
             text: "CSS class bilan yechaman",
             conclusion:
               "CSS classlar stilizatsiya uchun yordam beradi, lekin mantiq va tuzilishni qayta ishlatish uchun komponentlar kerak.",
+            score: 2,
           },
         ],
         order: 1,
@@ -421,16 +432,19 @@ function Counter() {
             text: "Har bir input uchun alohida useState ishlataman",
             conclusion:
               "Bu ishlaydi, lekin ko'p maydonli formalarda boshqarish qiyinlashadi. Ko'p maydonlar uchun bitta state ob'ekt yoki form library ishlatish yaxshiroq.",
+            score: 3,
           },
           {
             text: "Bitta state ob'ektida barcha maydonlarni saqlayman",
             conclusion:
               "Yaxshi yondashuv! Bitta ob'ektda saqlab, spread operatori bilan yangilash forma boshqarishni soddalashtiradi.",
+            score: 4,
           },
           {
             text: "React Hook Form kutubxonasini ishlataman",
             conclusion:
               "Professional yechim! React Hook Form validation, xatoliklar boshqarishi va samaradorlikni ta'minlaydi. Katta loyihalarda tavsiya etiladi.",
+            score: 5,
           },
         ],
         order: 2,

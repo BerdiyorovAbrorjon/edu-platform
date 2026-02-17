@@ -9,26 +9,17 @@ import {
   Lightbulb,
   Loader2,
   CheckCircle2,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+import { cn, getScoreColor } from "@/lib/utils";
 
 interface Answer {
   text: string;
   conclusion: string;
+  score: number;
 }
 
 interface SituationalQuestion {
@@ -60,43 +51,82 @@ export function SituationalQAViewer({
 }: SituationalQAViewerProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Map<number, number>>(new Map());
+  const [pendingAnswer, setPendingAnswer] = useState<number | null>(null);
+  const [confirmedAnswers, setConfirmedAnswers] = useState<Map<number, number>>(new Map());
+  const [scores, setScores] = useState<Map<number, number>>(new Map());
   const [completing, setCompleting] = useState(false);
   const conclusionRef = useRef<HTMLDivElement>(null);
 
   const total = questions.length;
   const current = questions[currentIndex];
-  const selectedAnswer = selectedAnswers.get(currentIndex);
-  const hasAnswer = selectedAnswer !== undefined;
+  const confirmedAnswer = confirmedAnswers.get(currentIndex);
+  const isConfirmed = confirmedAnswer !== undefined;
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === total - 1;
-  // Scroll to conclusion when answer is selected
+
+  const totalScore = Array.from(scores.values()).reduce((sum, s) => sum + s, 0);
+  const maxPossibleScore = total * 5;
+
+  // Scroll to conclusion when confirmed
   useEffect(() => {
-    if (hasAnswer && conclusionRef.current) {
+    if (isConfirmed && conclusionRef.current) {
       setTimeout(() => {
         conclusionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 100);
     }
-  }, [hasAnswer, currentIndex]);
+  }, [isConfirmed, currentIndex]);
 
   const selectAnswer = (answerIndex: number) => {
-    if (hasAnswer) return; // Don't allow changing answer
-    setSelectedAnswers((prev) => {
+    if (isConfirmed) return;
+    setPendingAnswer(answerIndex);
+  };
+
+  const confirmAnswer = () => {
+    if (pendingAnswer === null || isConfirmed) return;
+
+    const answer = current.answers[pendingAnswer];
+    const score = answer?.score ?? 0;
+
+    setConfirmedAnswers((prev) => {
       const next = new Map(prev);
-      next.set(currentIndex, answerIndex);
+      next.set(currentIndex, pendingAnswer);
       return next;
+    });
+
+    setScores((prev) => {
+      const next = new Map(prev);
+      next.set(currentIndex, score);
+      return next;
+    });
+
+    setPendingAnswer(null);
+
+    // Fire-and-forget: submit answer to API
+    fetch("/api/student/situational/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        situationalQAId: current.id,
+        lessonId,
+        selectedAnswerIndex: pendingAnswer,
+        score,
+      }),
+    }).catch(() => {
+      // silent fail — data is also tracked client-side
     });
   };
 
   const goNext = () => {
-    if (!isLast && hasAnswer) {
+    if (!isLast && isConfirmed) {
       setCurrentIndex((prev) => prev + 1);
+      setPendingAnswer(null);
     }
   };
 
   const goPrev = () => {
     if (!isFirst) {
       setCurrentIndex((prev) => prev - 1);
+      setPendingAnswer(null);
     }
   };
 
@@ -125,6 +155,8 @@ export function SituationalQAViewer({
 
   if (!current) return null;
 
+  const currentConfirmedAnswer = confirmedAnswers.get(currentIndex);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Progress */}
@@ -132,29 +164,40 @@ export function SituationalQAViewer({
         <p className="text-sm font-medium">
           Savol {currentIndex + 1}/{total}
         </p>
-        <div className="flex items-center gap-1.5">
-          {questions.map((_, idx) => {
-            const isCompleted = selectedAnswers.has(idx);
-            const isCurrent = idx === currentIndex;
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  if (isCompleted || idx <= currentIndex) setCurrentIndex(idx);
-                }}
-                disabled={!isCompleted && idx > currentIndex}
-                className={cn(
-                  "h-2.5 rounded-full transition-all",
-                  isCurrent
-                    ? "w-6 bg-primary"
-                    : isCompleted
-                    ? "w-2.5 bg-green-400 hover:bg-green-500 cursor-pointer"
-                    : "w-2.5 bg-muted cursor-not-allowed"
-                )}
-              />
-            );
-          })}
+        <div className="flex items-center gap-3">
+          {confirmedAnswers.size > 0 && (
+            <Badge variant="outline" className="gap-1">
+              <Star className="h-3 w-3" />
+              {totalScore}/{maxPossibleScore} ball
+            </Badge>
+          )}
+          <div className="flex items-center gap-1.5">
+            {questions.map((_, idx) => {
+              const isCompleted = confirmedAnswers.has(idx);
+              const isCurrent = idx === currentIndex;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    if (isCompleted || idx <= currentIndex) {
+                      setCurrentIndex(idx);
+                      setPendingAnswer(null);
+                    }
+                  }}
+                  disabled={!isCompleted && idx > currentIndex}
+                  className={cn(
+                    "h-2.5 rounded-full transition-all",
+                    isCurrent
+                      ? "w-6 bg-primary"
+                      : isCompleted
+                      ? "w-2.5 bg-green-400 hover:bg-green-500 cursor-pointer"
+                      : "w-2.5 bg-muted cursor-not-allowed"
+                  )}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -179,44 +222,53 @@ export function SituationalQAViewer({
       <div className="space-y-2.5">
         {current.answers.map((answer, aIdx) => {
           const style = ANSWER_STYLES[aIdx];
-          const isSelected = selectedAnswer === aIdx;
-          const isDisabled = hasAnswer && !isSelected;
+          const isPending = pendingAnswer === aIdx && !isConfirmed;
+          const isSelectedConfirmed = currentConfirmedAnswer === aIdx;
+          const isDisabled = isConfirmed && !isSelectedConfirmed;
 
           return (
             <div key={aIdx}>
               <button
                 type="button"
                 onClick={() => selectAnswer(aIdx)}
-                disabled={hasAnswer}
+                disabled={isConfirmed}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
-                  !hasAnswer && style?.bg,
-                  isSelected && style?.selected,
+                  !isConfirmed && !isPending && style?.bg,
+                  isPending && "border-primary bg-primary/5 ring-1 ring-primary",
+                  isSelectedConfirmed && style?.selected,
                   isDisabled && "opacity-50",
-                  !hasAnswer && "cursor-pointer",
-                  hasAnswer && !isSelected && "cursor-default"
+                  !isConfirmed && "cursor-pointer",
+                  isConfirmed && !isSelectedConfirmed && "cursor-default"
                 )}
               >
                 <span
                   className={cn(
                     "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-bold transition-colors",
-                    isSelected
+                    isPending
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : isSelectedConfirmed
                       ? style?.badge
                       : "bg-muted text-muted-foreground"
                   )}
                 >
                   {style?.letter}
                 </span>
-                <span className="text-base leading-relaxed pt-0.5">
+                <span className="text-base leading-relaxed pt-0.5 flex-1">
                   {answer.text}
                 </span>
-                {isSelected && (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600 mt-1 ml-auto" />
+                {isSelectedConfirmed && (
+                  <div className="flex items-center gap-2 shrink-0 mt-1">
+                    <Badge className={cn("text-xs", getScoreColor(answer.score))}>
+                      {answer.score}/5
+                    </Badge>
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  </div>
                 )}
               </button>
 
-              {/* Conclusion - appears below selected answer */}
-              {isSelected && (
+              {/* Conclusion - appears below confirmed answer */}
+              {isSelectedConfirmed && (
                 <div
                   ref={conclusionRef}
                   className="mt-2 ml-4 animate-in slide-in-from-top-2 fade-in duration-300"
@@ -243,6 +295,15 @@ export function SituationalQAViewer({
         })}
       </div>
 
+      {/* Confirm button (when pending, not yet confirmed) */}
+      {pendingAnswer !== null && !isConfirmed && (
+        <div className="flex justify-center animate-in fade-in duration-200">
+          <Button onClick={confirmAnswer} size="lg">
+            Tasdiqlash
+          </Button>
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex items-center justify-between pt-4 border-t">
         <Button
@@ -256,38 +317,17 @@ export function SituationalQAViewer({
         </Button>
 
         <span className="text-sm text-muted-foreground">
-          {selectedAnswers.size}/{total} javob berildi
+          {confirmedAnswers.size}/{total} javob berildi
         </span>
 
-        {isLast && hasAnswer ? (
+        {isLast && isConfirmed ? (
           currentStep === 3 ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button disabled={completing} className="gap-2">
-                  {completing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : null}
-                  Tugatish
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Vaziyatli savollarni tugatishni tasdiqlaysizmi?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Barcha {total} ta savolga javob berildi. Yakuniy testga
-                    o&apos;tishingiz mumkin.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleComplete}>
-                    Tugatish
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button onClick={handleComplete} disabled={completing} className="gap-2">
+              {completing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              Tugatish
+            </Button>
           ) : (
             <Button
               onClick={() => router.push(`/student/lessons/${lessonId}`)}
@@ -299,7 +339,7 @@ export function SituationalQAViewer({
         ) : (
           <Button
             onClick={goNext}
-            disabled={!hasAnswer || isLast}
+            disabled={!isConfirmed || isLast}
             className="gap-2"
           >
             Keyingi
