@@ -13,12 +13,25 @@
  *    GOOGLE_CLIENT_SECRET=your-client-secret
  *    NEXTAUTH_SECRET=generate-with-openssl-rand-base64-32
  *    NEXTAUTH_URL=http://localhost:3000
+ *
+ * ADMIN_EMAILS Configuration:
+ * - Add admin emails to .env.local
+ * - Format: ADMIN_EMAILS=email1@domain.com,email2@domain.com
+ * - No spaces between emails
+ * - If not set, first user becomes admin automatically (fallback)
+ * - Existing users must logout and login again after being added to the list
  */
 
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+
+const getAdminEmails = (): string[] => {
+  const adminEmailsEnv = process.env.ADMIN_EMAILS;
+  if (!adminEmailsEnv) return [];
+  return adminEmailsEnv.split(",").map((email) => email.trim()).filter(Boolean);
+};
 
 export const authOptions: NextAuthOptions = {
   debug: true,
@@ -31,7 +44,6 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // On sign in, user object is available; persist role to JWT
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -46,15 +58,28 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user }) {
-      // First user to sign in becomes ADMIN automatically
-      const userCount = await prisma.user.count();
-      if (userCount === 1) {
+      const adminEmails = getAdminEmails();
+
+      if (adminEmails.length === 0) {
+        // Fallback: first user to sign in becomes ADMIN
+        const userCount = await prisma.user.count();
+        if (userCount === 1) {
+          await prisma.user.update({
+            where: { id: user.id! },
+            data: { role: "ADMIN" },
+          });
+          user.role = "ADMIN";
+        }
+      } else {
+        // Set role based on ADMIN_EMAILS list
+        const isAdmin = adminEmails.includes(user.email ?? "");
         await prisma.user.update({
           where: { id: user.id! },
-          data: { role: "ADMIN" },
+          data: { role: isAdmin ? "ADMIN" : "STUDENT" },
         });
-        user.role = "ADMIN";
+        user.role = isAdmin ? "ADMIN" : "STUDENT";
       }
+
       return true;
     },
   },
