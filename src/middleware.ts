@@ -5,11 +5,22 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
+    const role = token?.role;
 
-    // Admin routes require ADMIN role
+    console.log(`[middleware] ${pathname} | role: ${role ?? "none"}`);
+
+    // Root path → redirect based on role
+    if (pathname === "/") {
+      const dest = role === "ADMIN" ? "/admin/lessons" : "/student/lessons";
+      console.log(`[middleware] / → ${dest}`);
+      return NextResponse.redirect(new URL(dest, req.url));
+    }
+
+    // Admin routes: require ADMIN role
     if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-      if (token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/login", req.url));
+      if (role !== "ADMIN") {
+        console.log(`[middleware] Non-admin blocked from ${pathname} → /student/lessons`);
+        return NextResponse.redirect(new URL("/student/lessons", req.url));
       }
     }
 
@@ -17,6 +28,8 @@ export default withAuth(
   },
   {
     callbacks: {
+      // Allow request to reach middleware function; unauthenticated requests
+      // are automatically redirected to the signIn page by withAuth.
       authorized: ({ token }) => !!token,
     },
     pages: {
@@ -27,6 +40,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
+    "/",
     "/admin/:path*",
     "/student/:path*",
     "/api/student/:path*",

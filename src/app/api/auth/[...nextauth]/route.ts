@@ -77,6 +77,14 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      console.log("[auth] redirect callback:", { url, baseUrl });
+      // Allow relative and same-origin URLs through; everything else → home.
+      // The middleware then resolves / to the role-appropriate destination.
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
     async jwt({ token, user, trigger }) {
       // On sign-in, re-fetch role from DB so it's always up to date.
       if (user || trigger === "signIn") {

@@ -8,7 +8,7 @@ export function GoogleSignInButton() {
     <Button
       variant="outline"
       className="w-full gap-3 bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
-      onClick={() => signIn("google", { callbackUrl: "/student/lessons" })}
+      onClick={() => signIn("google")}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
