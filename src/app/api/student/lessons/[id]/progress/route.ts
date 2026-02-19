@@ -1,28 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
-// TODO: Replace with real user from session
-async function getCurrentUserId() {
-  const user = await prisma.user.findFirst({
-    where: { role: "STUDENT" },
-    select: { id: true },
-  });
-  return user?.id ?? null;
-}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = await getCurrentUserId();
-
-    if (!userId) {
-      return NextResponse.json(
-        { currentStep: 0, completedAt: null },
-        { status: 200 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = session.user.id;
 
     const progress = await prisma.studentProgress.findUnique({
       where: {

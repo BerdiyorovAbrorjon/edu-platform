@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
-// TODO: Replace with real user from session
-async function getCurrentUserId() {
-  const user = await prisma.user.findFirst({
-    where: { role: "STUDENT" },
-    select: { id: true },
-  });
-  return user?.id ?? null;
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getCurrentUserId();
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
     const search = request.nextUrl.searchParams.get("search") || "";
 
     // Fetch lessons that have all 4 parts complete
@@ -52,24 +49,20 @@ export async function GET(request: NextRequest) {
         tests: {
           select: { type: true, questions: true },
         },
-        ...(userId
-          ? {
-              progress: {
-                where: { userId },
-                select: {
-                  currentStep: true,
-                  completedAt: true,
-                },
-              },
-            }
-          : {}),
+        progress: {
+            where: { userId },
+            select: {
+              currentStep: true,
+              completedAt: true,
+            },
+          },
       },
       orderBy: { createdAt: "desc" },
     });
 
     // Transform data for client
     const result = lessons.map((lesson) => {
-      const progress = (lesson.progress as { currentStep: number; completedAt: Date | null }[] | undefined)?.[0] ?? null;
+      const progress = (lesson.progress as { currentStep: number; completedAt: Date | null }[])?.[0] ?? null;
       return {
         id: lesson.id,
         title: lesson.title,

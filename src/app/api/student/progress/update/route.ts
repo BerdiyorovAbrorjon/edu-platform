@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
-// TODO: Get userId from session
-async function getCurrentUserId() {
-  const user = await prisma.user.findFirst({
-    where: { role: "STUDENT" },
-    select: { id: true },
-  });
-  return user?.id ?? null;
-}
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
+
     const body = await request.json();
     const { lessonId, currentStep } = body;
 
@@ -26,14 +25,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "currentStep must be 2, 3, or 4" },
         { status: 400 }
-      );
-    }
-
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 401 }
       );
     }
 

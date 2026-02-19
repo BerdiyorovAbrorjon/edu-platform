@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, BarChart3, GraduationCap } from "lucide-react";
+import { UserNav } from "@/components/auth/user-nav";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -26,6 +27,9 @@ export default function AdminLayout({
             <span className="text-lg font-bold">Edu Platform</span>
           </Link>
           <p className="text-xs text-muted-foreground mt-1">Admin Panel</p>
+          <div className="mt-4">
+            <UserNav />
+          </div>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {

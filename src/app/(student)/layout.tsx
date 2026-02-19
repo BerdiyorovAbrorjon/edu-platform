@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, BookOpen, BarChart3, User } from "lucide-react";
+import { GraduationCap, BookOpen, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserNav } from "@/components/auth/user-nav";
 import { cn } from "@/lib/utils";
 
 const navItems = [
+  { href: "/student/dashboard", label: "Bosh sahifa", icon: LayoutDashboard },
   { href: "/student/lessons", label: "Darslar", icon: BookOpen },
-  { href: "/student/progress", label: "Mening Progressim", icon: BarChart3 },
 ];
 
 export default function StudentLayout({
@@ -25,7 +25,7 @@ export default function StudentLayout({
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 sm:px-6">
           {/* Logo */}
-          <Link href="/student/lessons" className="flex items-center gap-2 mr-8">
+          <Link href="/student/dashboard" className="flex items-center gap-2 mr-8">
             <GraduationCap className="h-6 w-6 text-primary" />
             <span className="font-bold text-lg hidden sm:inline">Edu Platform</span>
           </Link>
@@ -60,16 +60,7 @@ export default function StudentLayout({
 
           {/* User area */}
           <div className="ml-auto flex items-center gap-3">
-            {/* TODO: Replace with real user from session */}
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium leading-none">Talaba</p>
-              <p className="text-xs text-muted-foreground">student@example.com</p>
-            </div>
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
+            <UserNav />
           </div>
         </div>
       </header>
