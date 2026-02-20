@@ -140,7 +140,7 @@ export default function AdminLessonsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" asChild>
+                      <Button variant="ghost" size="icon" asChild aria-label={`Edit ${lesson.title}`}>
                         <Link href={`/admin/lessons/${lesson.id}/edit`}>
                           <Pencil className="h-4 w-4" />
                         </Link>
@@ -149,6 +149,7 @@ export default function AdminLessonsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteLesson(lesson)}
+                        aria-label={`Delete ${lesson.title}`}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

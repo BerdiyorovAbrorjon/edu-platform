@@ -186,7 +186,7 @@ export default function EditLessonPage() {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step) => (
             <button
               key={step.key}
@@ -218,7 +218,7 @@ export default function EditLessonPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="initial-test" className="gap-1.5">
             Dastlabki baholash
             <Badge

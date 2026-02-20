@@ -1,13 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 
 export function UserNav() {
   const { data: session } = useSession();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   if (!session?.user) {
     return (
@@ -24,28 +36,54 @@ export function UserNav() {
     : "U";
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="hidden sm:block text-right">
-        <p className="text-sm font-medium leading-none">{session.user.name}</p>
-        <p className="text-xs text-muted-foreground">{session.user.email}</p>
+    <>
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:block text-right">
+          <p className="text-sm font-medium leading-none">{session.user.name}</p>
+          <p className="text-xs text-muted-foreground">{session.user.email}</p>
+        </div>
+        <Link href={dashboardHref} aria-label="Go to dashboard">
+          <Avatar className="h-8 w-8 cursor-pointer">
+            <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              {initials || <User className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowLogoutDialog(true)}
+          className="gap-1 text-muted-foreground hover:text-foreground"
+          aria-label="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">Chiqish</span>
+        </Button>
       </div>
-      <Link href={dashboardHref}>
-        <Avatar className="h-8 w-8 cursor-pointer">
-          <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
-          <AvatarFallback className="bg-primary/10 text-primary text-xs">
-            {initials || <User className="h-4 w-4" />}
-          </AvatarFallback>
-        </Avatar>
-      </Link>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="gap-1 text-muted-foreground hover:text-foreground"
-      >
-        <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">Chiqish</span>
-      </Button>
-    </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isAdmin ? "Sign out?" : "Chiqishni tasdiqlaysizmi?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAdmin
+                ? "You will be redirected to the login page."
+                : "Tizimdan chiqasiz va kirish sahifasiga yo'naltirilasiz."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {isAdmin ? "Cancel" : "Bekor qilish"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => signOut({ callbackUrl: "/login" })}>
+              {isAdmin ? "Sign out" : "Chiqish"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
