@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Plus, Search, Pencil, Trash2, BookOpen } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,10 +38,12 @@ export default function AdminLessonsPage() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       const res = await fetch(`/api/lessons?${params}`);
+      if (!res.ok) throw new Error("Failed to load lessons");
       const data = await res.json();
       setLessons(data.lessons || []);
     } catch {
       setLessons([]);
+      toast.error("Failed to load lessons");
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ export default function AdminLessonsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -111,6 +114,7 @@ export default function AdminLessonsPage() {
             )}
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -154,6 +158,7 @@ export default function AdminLessonsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 
