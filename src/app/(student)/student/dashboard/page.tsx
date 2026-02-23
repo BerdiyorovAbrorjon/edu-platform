@@ -298,7 +298,7 @@ export default function StudentDashboardPage() {
               Hali tugatilgan darslar yo&apos;q. Darsni boshlang!
             </p>
             <Button asChild variant="outline" size="sm" className="rounded-xl">
-              <Link href="/student/lessons">Darslarni ko'rish</Link>
+              <Link href="/student/lessons">Darslarni ko&apos;rish</Link>
             </Button>
           </div>
         )}

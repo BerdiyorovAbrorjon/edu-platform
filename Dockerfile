@@ -8,7 +8,9 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm keshi saqlandi — package.json o'zgarmasa qayta yuklamaydi
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # ============================================================
 # Stage 2: Build the application
@@ -22,17 +24,24 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# prisma generate faqat schemani o'qiydi, real DB ulanishi kerak emas.
+# prisma.config.ts env() tekshiruvi uchun placeholder beramiz.
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
+ENV DATABASE_URL=$DATABASE_URL
+
 # Generate Prisma client (outputs to src/generated/prisma)
 RUN npx prisma generate
 
 # NEXT_PUBLIC_APP_URL is baked in at build time.
 # Override this build arg when building for production:
 #   docker build --build-arg NEXT_PUBLIC_APP_URL=https://yourdomain.com .
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_APP_URL=http://localhost
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# .next/cache saqlandi — keyingi buildlar 3-5x tezroq bo'ladi
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # ============================================================
 # Stage 3: Minimal production runner (Next.js standalone)

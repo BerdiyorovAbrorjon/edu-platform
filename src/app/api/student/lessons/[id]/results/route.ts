@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 interface Question {
@@ -59,10 +59,10 @@ export async function GET(
     const finalResult = testResults.find((r) => r.testId === finalTest?.id);
 
     // Build per-question breakdown for tests
-    function buildQuestionBreakdown(
+    const buildQuestionBreakdown = (
       test: { questions: unknown } | undefined,
       result: { answers: unknown } | undefined
-    ) {
+    ) => {
       if (!test || !result) return null;
       const questions = test.questions as Question[];
       const userAnswers = result.answers as number[];
@@ -73,7 +73,7 @@ export async function GET(
         userAnswer: userAnswers[i] ?? -1,
         isCorrect: userAnswers[i] === q.correctAnswer,
       }));
-    }
+    };
 
     const initialQuestions = initialTest ? (initialTest.questions as unknown[]).length : 0;
     const finalQuestions = finalTest ? (finalTest.questions as unknown[]).length : 0;

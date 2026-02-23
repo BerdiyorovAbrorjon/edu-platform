@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { HeroCta } from "@/components/landing/hero-cta";
 import {

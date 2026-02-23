@@ -11,6 +11,7 @@ import { SituationalQAViewer } from "@/components/student/situational-qa-viewer"
 interface Answer {
   text: string;
   conclusion: string;
+  score: number;
 }
 
 interface SituationalQuestion {
