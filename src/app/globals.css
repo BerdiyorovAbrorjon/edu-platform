@@ -94,3 +94,52 @@
 .prose iframe { @apply max-w-full my-4 rounded-lg; }
 .prose s { @apply line-through; }
 .prose u { @apply underline; }
+
+/* ─── Landing Page ─── */
+@keyframes lp-fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lp-glow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.75; }
+}
+@keyframes lp-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes lp-scroll-dot {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%       { transform: translateY(6px); opacity: 0.3; }
+}
+
+.lp-fade-up {
+  opacity: 0;
+  animation: lp-fade-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.lp-glow { animation: lp-glow 4s ease-in-out infinite; }
+.lp-shimmer-text {
+  background: linear-gradient(270deg, #60a5fa, #a78bfa, #f472b6, #a78bfa, #60a5fa);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: lp-shimmer 6s ease-in-out infinite;
+}
+.lp-scroll-dot { animation: lp-scroll-dot 1.5s ease-in-out infinite; }
+
+.lp-d100 { animation-delay: 100ms; }
+.lp-d200 { animation-delay: 200ms; }
+.lp-d300 { animation-delay: 300ms; }
+.lp-d400 { animation-delay: 400ms; }
+.lp-d500 { animation-delay: 500ms; }
+.lp-d600 { animation-delay: 600ms; }
+
+/* Subtle dot-grid for dark sections */
+.lp-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+}

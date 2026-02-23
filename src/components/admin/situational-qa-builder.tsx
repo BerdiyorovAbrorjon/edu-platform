@@ -321,18 +321,15 @@ function SortableQuestion({
                                 Ball (0-5)
                               </Label>
                               <Input
-                                type="number"
-                                min={0}
-                                max={5}
+                                type="text"
+                                inputMode="numeric"
                                 value={answer.score}
-                                onChange={(e) =>
-                                  onUpdateAnswer(
-                                    index,
-                                    aIdx,
-                                    "score",
-                                    Math.max(0, Math.min(5, parseInt(e.target.value) || 0))
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "").slice(-1); // faqat raqam, 1 ta
+                                  const parsed = val === "" ? 0 : parseInt(val, 10);
+                                  const clamped = Math.max(0, Math.min(5, isNaN(parsed) ? 0 : parsed));
+                                  onUpdateAnswer(index, aIdx, "score", clamped);
+                                }}
                                 className="w-20"
                               />
                             </div>
@@ -460,11 +457,11 @@ export function SituationalQABuilder({ lessonId }: SituationalQABuilderProps) {
       prev.map((q, i) =>
         i === questionIndex
           ? {
-              ...q,
-              answers: q.answers.map((a, j) =>
-                j === answerIndex ? { ...a, [field]: value } : a
-              ),
-            }
+            ...q,
+            answers: q.answers.map((a, j) =>
+              j === answerIndex ? { ...a, [field]: value } : a
+            ),
+          }
           : q
       )
     );

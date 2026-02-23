@@ -45,6 +45,9 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Link Google account to existing user by email if Account record is missing.
+      // Prevents OAuthAccountNotLinked errors when a User row exists without an Account row.
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   events: {

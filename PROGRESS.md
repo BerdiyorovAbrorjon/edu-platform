@@ -193,6 +193,3 @@ model TestResult {
 - **Drag & Drop:** @dnd-kit
 - **Charts:** Recharts
 - **Auth:** (pending) NextAuth + Google OAuth
-
-<!-- 
-claude --resume 721d6975-666d-4b3e-8721-40715066aa0a                                                                                                             -->

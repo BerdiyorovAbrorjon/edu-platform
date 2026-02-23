@@ -7,7 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  Circle,
   FileDown,
   Loader2,
   Menu,
@@ -18,17 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 function getYouTubeId(url: string): string | null {
@@ -305,66 +293,31 @@ export function LecturesViewer({
               ))}
             </div>
 
-            <Button
-              variant="outline"
-              onClick={goNext}
-              disabled={isLast}
-              className="gap-2"
-            >
-              <span className="hidden sm:inline">Keyingi</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            {isLast && allViewed && currentStep === 2 ? (
+              <Button
+                onClick={handleComplete}
+                disabled={completing}
+                className="gap-2"
+              >
+                {completing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Tugatish</span>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={goNext}
+                disabled={isLast}
+                className="gap-2"
+              >
+                <span className="hidden sm:inline">Keyingi</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-
-          {/* Complete section */}
-          {currentStep === 2 && (
-            <>
-              <Separator />
-              <div className="flex flex-col items-center gap-3 py-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {allViewed ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Barcha maruzalar ko&apos;rib chiqildi
-                    </>
-                  ) : (
-                    <>
-                      <Circle className="h-4 w-4" />
-                      {lectures.length - viewedLectures.size} ta maruza qoldi
-                    </>
-                  )}
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="lg" disabled={completing}>
-                      {completing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : null}
-                      Maruzalarni tugatish
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Maruzalarni tugatishni tasdiqlaysizmi?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {allViewed
-                          ? "Barcha maruzalarni ko'rib chiqdingiz. Keyingi bosqichga — vaziyatli savollarga o'tishingiz mumkin."
-                          : `Hali ${lectures.length - viewedLectures.size} ta maruzani ko'rib chiqmadingiz. Davom etishni xohlaysizmi?`}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleComplete}>
-                        Tugatish
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

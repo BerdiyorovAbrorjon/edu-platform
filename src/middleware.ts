@@ -9,11 +9,15 @@ export default withAuth(
 
     console.log(`[middleware] ${pathname} | role: ${role ?? "none"}`);
 
-    // Root path → redirect based on role
+    // Root path: redirect authenticated users to their dashboard
     if (pathname === "/") {
-      const dest = role === "ADMIN" ? "/admin/lessons" : "/student/lessons";
-      console.log(`[middleware] / → ${dest}`);
-      return NextResponse.redirect(new URL(dest, req.url));
+      if (token) {
+        const dest = role === "ADMIN" ? "/admin/lessons" : "/student/lessons";
+        console.log(`[middleware] / → ${dest}`);
+        return NextResponse.redirect(new URL(dest, req.url));
+      }
+      // Unauthenticated users see the landing page
+      return NextResponse.next();
     }
 
     // Admin routes: require ADMIN role
@@ -28,9 +32,12 @@ export default withAuth(
   },
   {
     callbacks: {
-      // Allow request to reach middleware function; unauthenticated requests
-      // are automatically redirected to the signIn page by withAuth.
-      authorized: ({ token }) => !!token,
+      // Allow unauthenticated users to access "/" (landing page);
+      // all other matched routes require a valid token.
+      authorized: ({ token, req }) => {
+        if (req.nextUrl.pathname === "/") return true;
+        return !!token;
+      },
     },
     pages: {
       signIn: "/login",
