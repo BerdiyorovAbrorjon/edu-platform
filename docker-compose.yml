@@ -1,14 +1,97 @@
 services:
+  # ──────────────────────────────────────────────
+  # Database migrations  (runs once then exits)
+  # ──────────────────────────────────────────────
+  migrate:
+    build:
+      context: .
+      target: builder          # use the builder stage (has full node_modules)
+    container_name: edu-platform-migrate
+    restart: "no"
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────
+  # Next.js application
+  # ──────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
+    container_name: edu-platform-app
+    restart: unless-stopped
+    environment:
+      # App
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
+
+      # Auth
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL:    ${NEXTAUTH_URL}
+
+      # Google OAuth
+      GOOGLE_CLIENT_ID:     ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+      # Admin
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+
+      # MinIO  (internal service name "minio" as hostname)
+      MINIO_ENDPOINT:      minio
+      MINIO_PORT:          9000
+      MINIO_ROOT_USER:     ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET:        ${MINIO_BUCKET:-edu-platform}
+      MINIO_USE_SSL:       "false"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────
+  # Nginx reverse proxy  (public entrypoint)
+  # ──────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: edu-platform-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      # Uncomment after adding SSL certificate:
+      # - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # SSL certificates (e.g. via Certbot / Let's Encrypt):
+      # - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────
+  # PostgreSQL
+  # ──────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: edu-platform-db
     restart: unless-stopped
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-edu_platform}
+      POSTGRES_DB:       ${POSTGRES_DB:-edu_platform}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,16 +99,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
 
+  # ──────────────────────────────────────────────
+  # MinIO  (S3-compatible object storage)
+  # ──────────────────────────────────────────────
   minio:
     image: minio/minio:latest
     container_name: edu-platform-minio
     restart: unless-stopped
     ports:
+      # S3 API — needed so browsers can fetch uploaded files directly.
+      # Put your server IP / domain here, or proxy through nginx.
       - "${MINIO_PORT:-9000}:9000"
+      # MinIO web console (optional — remove in production if not needed)
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_USER:     ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/data
@@ -35,7 +126,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
 
+# ──────────────────────────────────────────────
+# Persistent volumes
+# ──────────────────────────────────────────────
 volumes:
   postgres_data:
   minio_data:
+
+# ──────────────────────────────────────────────
+# Internal network
+# ──────────────────────────────────────────────
+networks:
+  app-network:
+    driver: bridge
