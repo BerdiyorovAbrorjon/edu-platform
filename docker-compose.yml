@@ -5,7 +5,7 @@ services:
   migrate:
     build:
       context: .
-      target: builder          # use the builder stage (has full node_modules)
+      target: builder # use the builder stage (has full node_modules)
     container_name: edu-platform-migrate
     restart: "no"
     command: npx prisma migrate deploy
@@ -34,10 +34,10 @@ services:
 
       # Auth
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL:    ${NEXTAUTH_URL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
 
       # Google OAuth
-      GOOGLE_CLIENT_ID:     ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
       # Admin
@@ -47,12 +47,12 @@ services:
       DATABASE_URL: ${DATABASE_URL}
 
       # MinIO  (internal service name "minio" as hostname)
-      MINIO_ENDPOINT:      minio
-      MINIO_PORT:          9000
-      MINIO_ROOT_USER:     ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_BUCKET:        ${MINIO_BUCKET:-edu-platform}
-      MINIO_USE_SSL:       "false"
+      MINIO_BUCKET: ${MINIO_BUCKET:-edu-platform}
+      MINIO_USE_SSL: "false"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -69,7 +69,7 @@ services:
     container_name: edu-platform-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "81:80"
       # Uncomment after adding SSL certificate:
       # - "443:443"
     volumes:
@@ -89,9 +89,9 @@ services:
     container_name: edu-platform-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB:       ${POSTGRES_DB:-edu_platform}
+      POSTGRES_DB: ${POSTGRES_DB:-edu_platform}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -116,7 +116,7 @@ services:
       # MinIO web console (optional — remove in production if not needed)
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
-      MINIO_ROOT_USER:     ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/data
