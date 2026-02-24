@@ -21,4 +21,5 @@ jobs:
             cd /root/edu-platform
             git pull origin main
             echo "$ENV_FILE" > .env
+            docker-compose rm -sf app migrate || true
             docker-compose up -d --build app
