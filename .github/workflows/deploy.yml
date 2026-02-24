@@ -18,12 +18,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           envs: ENV_FILE
           script: |
-            # Install Docker Compose V2 if not present
-            if ! docker compose version &>/dev/null; then
-              apt-get update -qq && apt-get install -y -qq docker-compose-plugin
-            fi
-
             cd /root/edu-platform
             git pull origin main
             echo "$ENV_FILE" > .env
-            docker compose up -d --build
+            docker compose up -d --build app
