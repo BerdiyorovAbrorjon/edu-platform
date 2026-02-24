@@ -4,7 +4,14 @@ import { PrismaClient, Role, TestType } from "../src/generated/prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clean existing data (in correct order for foreign keys)
+  // Skip if data already exists (first-run only in production)
+  const existingLessons = await prisma.lesson.count();
+  if (existingLessons > 0) {
+    console.log(`Seed skipped: ${existingLessons} lesson(s) already exist.`);
+    return;
+  }
+
+  // Clean only lesson-related data (preserve real users/sessions/accounts)
   await prisma.situationalQAResult.deleteMany();
   await prisma.testResult.deleteMany();
   await prisma.studentProgress.deleteMany();
@@ -12,38 +19,17 @@ async function main() {
   await prisma.lecture.deleteMany();
   await prisma.test.deleteMany();
   await prisma.lesson.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.user.deleteMany();
 
-  console.log("Cleared existing data.");
+  console.log("Cleared existing lesson data.");
 
-  // --- Users ---
-  const admin = await prisma.user.create({
-    data: {
-      email: "admin@example.com",
-      name: "Admin Foydalanuvchi",
-      role: Role.ADMIN,
-    },
+  // --- Admin user ---
+  const admin = await prisma.user.upsert({
+    where: { email: "lochin0207@gmail.com" },
+    update: { role: Role.ADMIN },
+    create: { email: "lochin0207@gmail.com", role: Role.ADMIN },
   });
 
-  const student = await prisma.user.create({
-    data: {
-      email: "student@example.com",
-      name: "Talaba Foydalanuvchi",
-      role: Role.STUDENT,
-    },
-  });
-
-  const student2 = await prisma.user.create({
-    data: {
-      email: "student2@example.com",
-      name: "Ikkinchi Talaba",
-      role: Role.STUDENT,
-    },
-  });
-
-  console.log("Users created.");
+  console.log(`Admin upserted: ${admin.email}`);
 
   // ===========================
   // LESSON 1: Web Development
@@ -271,12 +257,7 @@ document.querySelector(".tugma").addEventListener("click", () => {
         },
         {
           question: "Responsive dizayn uchun qaysi CSS xususiyati ishlatiladi?",
-          options: [
-            "@media queries",
-            "@responsive",
-            "@screen",
-            "@device",
-          ],
+          options: ["@media queries", "@responsive", "@screen", "@device"],
           correctAnswer: 0,
         },
       ],
@@ -323,7 +304,8 @@ document.querySelector(".tugma").addEventListener("click", () => {
           correctAnswer: 2,
         },
         {
-          question: "React komponentda state boshqarish uchun nima ishlatiladi?",
+          question:
+            "React komponentda state boshqarish uchun nima ishlatiladi?",
           options: [
             "this.state = {}",
             "useState() hook",
@@ -544,14 +526,12 @@ function Counter() {
 
   console.log("");
   console.log("=== Seed Complete ===");
-  console.log(`Admin:     ${admin.email} (${admin.name})`);
-  console.log(`Student 1: ${student.email} (${student.name})`);
-  console.log(`Student 2: ${student2.email} (${student2.name})`);
-  console.log(`Lesson 1:  ${lesson1.title} — COMPLETE (all 4 parts)`);
-  console.log(`Lesson 2:  ${lesson2.title} — COMPLETE (all 4 parts)`);
-  console.log(`Lesson 3:  ${lesson3.title} — INCOMPLETE (missing parts, won't show to students)`);
-  console.log("");
-  console.log("Students can now test the full flow on Lessons 1 and 2.");
+  console.log(`Admin:    ${admin.email}`);
+  console.log(`Lesson 1: ${lesson1.title} — COMPLETE (all 4 parts)`);
+  console.log(`Lesson 2: ${lesson2.title} — COMPLETE (all 4 parts)`);
+  console.log(
+    `Lesson 3: ${lesson3.title} — INCOMPLETE (missing parts, won't show to students)`,
+  );
 }
 
 main()

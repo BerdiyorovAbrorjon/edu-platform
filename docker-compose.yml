@@ -8,7 +8,7 @@ services:
       target: builder # use the builder stage (has full node_modules)
     container_name: edu-platform-migrate
     restart: "no"
-    command: npx prisma migrate deploy
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
