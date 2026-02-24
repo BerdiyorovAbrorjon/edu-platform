@@ -8,9 +8,7 @@ RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# npm keshi saqlandi — package.json o'zgarmasa qayta yuklamaydi
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+RUN npm ci
 
 # ============================================================
 # Stage 2: Build the application
@@ -39,9 +37,7 @@ ARG NEXT_PUBLIC_APP_URL=http://localhost
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# .next/cache saqlandi — keyingi buildlar 3-5x tezroq bo'ladi
-RUN --mount=type=cache,target=/app/.next/cache \
-    npm run build
+RUN npm run build
 
 # ============================================================
 # Stage 3: Minimal production runner (Next.js standalone)
@@ -56,7 +52,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs \
- && adduser  --system --uid 1001 nextjs
+    && adduser  --system --uid 1001 nextjs
 
 # Standalone server + static assets
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
