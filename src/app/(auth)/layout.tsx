@@ -30,7 +30,7 @@ export default function AuthLayout({
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg shadow-blue-500/25">
               <Zap className="h-4.5 w-4.5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">Edu Platform</span>
+            <span className="text-lg font-bold text-white">Akme-pedagog</span>
           </Link>
         </div>
 
@@ -63,7 +63,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <div className="relative z-10 p-8 text-center text-xs text-slate-700">
-          © 2024 Edu Platform. Barcha huquqlar himoyalangan.
+          © 2024 Akme-pedagog. Barcha huquqlar himoyalangan.
         </div>
       </div>
 
@@ -75,7 +75,9 @@ export default function AuthLayout({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Edu Platform</span>
+            <span className="text-xl font-bold text-gray-900">
+              Akme-pedagog
+            </span>
           </Link>
         </div>
 

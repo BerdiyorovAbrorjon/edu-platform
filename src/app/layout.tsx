@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Edu Platform",
+  title: "Akme-pedagog",
   description: "Educational platform for courses and learning",
 };
 

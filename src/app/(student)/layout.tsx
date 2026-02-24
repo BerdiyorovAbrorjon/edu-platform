@@ -32,7 +32,7 @@ export default function StudentLayout({
               <Zap className="h-4 w-4 text-white" />
             </div>
             <span className="hidden text-base font-bold text-gray-900 sm:inline">
-              Edu Platform
+              Akme-pedagog
             </span>
           </Link>
 
@@ -41,8 +41,7 @@ export default function StudentLayout({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
-                pathname === item.href ||
-                pathname.startsWith(item.href + "/");
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
@@ -51,13 +50,13 @@ export default function StudentLayout({
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-blue-50 text-blue-700"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
                   )}
                 >
                   <Icon
                     className={cn(
                       "h-4 w-4",
-                      isActive ? "text-blue-600" : "text-gray-400"
+                      isActive ? "text-blue-600" : "text-gray-400",
                     )}
                   />
                   <span className="hidden sm:inline">{item.label}</span>
@@ -75,9 +74,7 @@ export default function StudentLayout({
 
       {/* Main content */}
       <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          {children}
-        </div>
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</div>
       </main>
     </div>
   );

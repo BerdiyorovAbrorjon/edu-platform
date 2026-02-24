@@ -29,7 +29,7 @@ export default async function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg shadow-blue-500/25">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">Edu Platform</span>
+            <span className="text-lg font-bold text-white">Akme-pedagog</span>
           </Link>
 
           {isLoggedIn ? (
@@ -115,7 +115,9 @@ export default async function HomePage() {
                 { value: "4.9\u2605", label: "Reyting" },
               ].map((s) => (
                 <div key={s.label} className="text-center">
-                  <div className="text-2xl font-black text-white">{s.value}</div>
+                  <div className="text-2xl font-black text-white">
+                    {s.value}
+                  </div>
                   <div className="mt-0.5 text-xs text-slate-500">{s.label}</div>
                 </div>
               ))}
@@ -302,10 +304,10 @@ export default async function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-violet-600">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-white">Edu Platform</span>
+            <span className="font-bold text-white">Akme-pedagog</span>
           </Link>
           <p className="text-sm text-slate-600">
-            © 2024 Edu Platform. Barcha huquqlar himoyalangan.
+            © 2024 Akme-pedagog. Barcha huquqlar himoyalangan.
           </p>
         </div>
       </footer>

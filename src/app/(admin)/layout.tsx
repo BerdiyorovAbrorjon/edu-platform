@@ -33,7 +33,7 @@ function SidebarContent({
             <Zap className="h-4 w-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-white">Edu Platform</p>
+            <p className="text-sm font-bold text-white">Akme-pedagog</p>
             <p className="text-xs text-slate-500">Admin Panel</p>
           </div>
         </Link>
@@ -55,13 +55,13 @@ function SidebarContent({
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-blue-500/15 text-blue-400"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200",
               )}
             >
               <item.icon
                 className={cn(
                   "h-4 w-4 shrink-0",
-                  isActive ? "text-blue-400" : "text-slate-500"
+                  isActive ? "text-blue-400" : "text-slate-500",
                 )}
               />
               {item.label}
@@ -109,7 +109,7 @@ export default function AdminLayout({
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-800 bg-slate-950 transition-transform duration-200 lg:hidden",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <button
@@ -142,7 +142,7 @@ export default function AdminLayout({
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-600">
               <Zap className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-bold text-white">Edu Platform</span>
+            <span className="font-bold text-white">Akme-pedagog</span>
           </Link>
           <span className="text-xs text-slate-500">Admin</span>
         </header>

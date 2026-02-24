@@ -1,4 +1,4 @@
-# Edu Platform
+# Akme-pedagog
 
 Educational platform built with Next.js 14, TypeScript, and Tailwind CSS.
 
@@ -33,6 +33,7 @@ docker compose up -d
 ```
 
 This starts:
+
 - **PostgreSQL** on port `5435`
 - **MinIO** on port `9010` (API) and `9011` (Console)
 
@@ -85,19 +86,19 @@ src/
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+| Command         | Description              |
+| --------------- | ------------------------ |
+| `npm run dev`   | Start development server |
+| `npm run build` | Build for production     |
+| `npm run start` | Start production server  |
+| `npm run lint`  | Run ESLint               |
 
 ## Infrastructure
 
-| Service | Port | Credentials |
-|---------|------|-------------|
-| PostgreSQL | 5435 | `postgres` / `postgres` |
-| MinIO API | 9010 | `minioadmin` / `minioadmin` |
+| Service       | Port | Credentials                 |
+| ------------- | ---- | --------------------------- |
+| PostgreSQL    | 5435 | `postgres` / `postgres`     |
+| MinIO API     | 9010 | `minioadmin` / `minioadmin` |
 | MinIO Console | 9011 | `minioadmin` / `minioadmin` |
 
 ## Tech Stack

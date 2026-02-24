@@ -1,4 +1,4 @@
-# Edu Platform - Development Progress
+# Akme-pedagog - Development Progress
 
 **Last Updated:** 2024-02-13
 **Current Status:** Section 6 Complete
@@ -9,6 +9,7 @@
 ## ✅ Completed Sections
 
 ### Section 1: Project Setup ✅
+
 - Next.js 14 with TypeScript
 - Tailwind CSS + shadcn/ui components
 - Docker Compose (PostgreSQL + MinIO)
@@ -16,6 +17,7 @@
 - **Files:** `docker-compose.yml`, `next.config.js`, folder structure
 
 ### Section 2: Database Schema ✅
+
 - Prisma ORM setup with PostgreSQL
 - Models: User, Lesson, Test, Lecture, SituationalQA, StudentProgress, TestResult
 - NextAuth models (Account, Session, VerificationToken)
@@ -23,15 +25,17 @@
 - **Files:** `prisma/schema.prisma`, `lib/prisma.ts`, `prisma/seed.ts`
 
 ### Section 3: Authentication ⏭️ SKIPPED
+
 - Google OAuth will be added later (Section 8)
 - Currently using dummy user for development
 
 ### Section 4: Admin - Lesson CRUD ✅
+
 - Lesson list page with search/filter
 - Create lesson form
 - Edit/delete functionality
 - API routes: `/api/lessons/*`
-- **Files:** 
+- **Files:**
   - `app/(admin)/lessons/page.tsx`
   - `app/(admin)/lessons/create/page.tsx`
   - `app/api/lessons/route.ts`
@@ -40,6 +44,7 @@
 ### Section 5: Admin - Lesson Builder (4 Steps) ✅
 
 #### 5.1: Initial Test Builder ✅
+
 - Tabs layout for 4-step lesson creation
 - Test builder component (add/remove questions)
 - Question format: multiple choice (4 options)
@@ -49,6 +54,7 @@
   - `components/admin/test-builder.tsx`
 
 #### 5.2: Lectures Manager + Rich Text Editor ✅
+
 - Tiptap rich text editor integration
 - Video URL support (YouTube/Vimeo)
 - File upload to MinIO (PDFs, docs)
@@ -60,6 +66,7 @@
   - `lib/minio.ts`
 
 #### 5.3: Situational Q&A Builder ✅
+
 - Question with multiple answer options (2-6)
 - Each answer has conclusion/explanation
 - Drag-and-drop reordering
@@ -68,6 +75,7 @@
   - `components/admin/situational-qa-builder.tsx`
 
 #### 5.4: Final Test Builder ✅
+
 - Reuses TestBuilder component
 - Same structure as initial test
 - API: `/api/lessons/[id]/tests/final`
@@ -76,6 +84,7 @@
 ### Section 6: Student Interface ✅
 
 #### 6.1: Lesson List + Overview ✅
+
 - Student layout with navbar (Darslar, Mening Progressim)
 - Lessons grid with progress indicators (Boshlanmagan/Jarayonda/Tugatilgan)
 - Lesson overview page with 4-step stepper
@@ -88,6 +97,7 @@
   - `components/student/lesson-stepper.tsx`
 
 #### 6.2: Initial Test Taking ✅
+
 - Reusable TestTaker component (all questions at once)
 - Radio buttons with color-coded options (A/B/C/D)
 - Progress counter, confirmation dialog before submit
@@ -100,6 +110,7 @@
   - `components/student/test-taker.tsx`
 
 #### 6.3: Lectures View ✅
+
 - Two-column layout: sidebar (lecture list) + main content
 - YouTube embed with custom VideoPlayer component
 - Rich HTML content rendering (prose styles)
@@ -114,6 +125,7 @@
   - `components/student/lectures-viewer.tsx`
 
 #### 6.4: Situational Q&A Interface ✅
+
 - One question at a time with progress dots
 - Color-coded answer buttons (A-F)
 - Conclusion card slides in after answer selection
@@ -125,6 +137,7 @@
   - `components/student/situational-qa-viewer.tsx`
 
 #### 6.5: Final Test Taking ✅
+
 - Reuses TestTaker component with testType="FINAL"
 - Authorization: locked until step 4, redirects if already completed
 - Sets completedAt on submission (marks lesson complete)
@@ -133,6 +146,7 @@
   - `app/(student)/student/lessons/[id]/final-test/page.tsx`
 
 #### 6.6: Results Comparison ✅
+
 - Celebration header with trophy icon
 - Side-by-side score cards (Initial vs Final)
 - Improvement indicator (TrendingUp/Down/Same)
@@ -154,6 +168,7 @@
 ---
 
 ## 🗄️ Database Schema Summary
+
 ```prisma
 model Lesson {
   id, title, description, createdById
@@ -183,6 +198,7 @@ model TestResult {
 ```
 
 ## 🔧 Tech Stack
+
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Database:** PostgreSQL 16 (Docker)
