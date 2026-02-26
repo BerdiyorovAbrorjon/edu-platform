@@ -29,10 +29,8 @@ jobs:
             # 2) write .env from secret
             echo "$ENV_FILE" > .env
             chmod 600 .env
-
             # 3) pull/build + restart (NO -v, run in background)
             docker compose pull || true
             docker compose up -d --build --force-recreate
-
             # 4) cleanup old images (optional)
             docker image prune -f
