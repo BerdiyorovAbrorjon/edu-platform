@@ -8,12 +8,12 @@ services:
       target: builder # use the builder stage (has full node_modules)
     container_name: edu-platform-migrate
     restart: "no"
-    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
       postgres:
         condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
     networks:
       - app-network
 
@@ -26,8 +26,6 @@ services:
       target: runner
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
-        NEXT_PUBLIC_MINIO_URL: ${NEXT_PUBLIC_MINIO_URL:-http://localhost:9010}
-        NEXT_PUBLIC_MINIO_BUCKET: ${MINIO_BUCKET:-edu-platform}
     container_name: edu-platform-app
     restart: unless-stopped
     environment:
@@ -43,7 +41,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
 
       # Admin
-      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
 
       # Database
       DATABASE_URL: ${DATABASE_URL}
@@ -51,15 +49,15 @@ services:
       # MinIO  (internal service name "minio" as hostname)
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
-      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
-      MINIO_PUBLIC_PORT: ${MINIO_PORT:-9010}
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_BUCKET: ${MINIO_BUCKET:-edu-platform}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_USE_SSL: "false"
     depends_on:
       migrate:
         condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
       minio:
         condition: service_healthy
     networks:
@@ -101,10 +99,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 3s
       retries: 5
+      start_period: 15s
     networks:
       - app-network
 
@@ -116,19 +119,19 @@ services:
     container_name: edu-platform-minio
     restart: unless-stopped
     ports:
-      # S3 API — needed so browsers can fetch uploaded files directly.
-      # Put your server IP / domain here, or proxy through nginx.
-      - "${MINIO_PORT:-9000}:9000"
-      # MinIO web console (optional — remove in production if not needed)
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "9000:9000"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
-    command: server /data --console-address ":9001"
+    command: server /data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:9000/minio/health/ready >/dev/null 2>&1 || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
