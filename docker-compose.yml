@@ -26,6 +26,8 @@ services:
       target: runner
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost}
+        NEXT_PUBLIC_MINIO_URL: ${NEXT_PUBLIC_MINIO_URL:-http://localhost:9010}
+        NEXT_PUBLIC_MINIO_BUCKET: ${MINIO_BUCKET:-edu-platform}
     container_name: edu-platform-app
     restart: unless-stopped
     environment:
@@ -49,6 +51,8 @@ services:
       # MinIO  (internal service name "minio" as hostname)
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_PUBLIC_PORT: ${MINIO_PORT:-9010}
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-edu-platform}
