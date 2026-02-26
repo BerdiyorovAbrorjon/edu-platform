@@ -19,10 +19,8 @@ jobs:
           envs: ENV_FILE
           script: |
             cd /root/edu-platform
-            docker compose up -d
-            # cd /root/edu-platform
-            # git pull origin main
-            # echo "$ENV_FILE" > .env
-            # docker compose build app migrate
-            # docker compose rm -sf app migrate || true
-            # docker compose up -d --no-build app
+            git pull origin main
+            echo "$ENV_FILE" > .env
+            docker compose build app migrate
+            docker compose rm -sf app migrate || true
+            docker compose up -d --no-build app
