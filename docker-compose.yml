@@ -115,26 +115,17 @@ services:
   # MinIO  (S3-compatible object storage)
   # ──────────────────────────────────────────────
   minio:
-    image: minio/minio:latest
+    image: minio/minio
     container_name: edu-platform-minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - minio_data:/data
-    command: server /data
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://127.0.0.1:9000/minio/health/ready >/dev/null 2>&1 || exit 1",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - minio-data:/data
     networks:
       - app-network
 
