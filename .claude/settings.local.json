@@ -15,7 +15,10 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(ls:*)",
-      "Read(//usr/**)"
+      "Read(//usr/**)",
+      "Bash(npx dotenv-cli -e .env.local -- npx prisma generate)",
+      "Bash(docker ps --format \"table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}\")",
+      "Bash(npx dotenv-cli -e .env.local -- npx prisma migrate deploy)"
     ]
   }
 }

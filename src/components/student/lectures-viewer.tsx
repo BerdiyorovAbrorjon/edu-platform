@@ -53,7 +53,9 @@ interface Lecture {
   title: string;
   description: string;
   videoUrl: string | null;
-  filePath: string | null;
+  filePath: string | null;         // Legacy direct MinIO path
+  fileId: string | null;           // Secure download file reference
+  fileOriginalName: string | null; // Display name
   order: number;
 }
 
@@ -240,7 +242,7 @@ export function LecturesViewer({
           )}
 
           {/* File download */}
-          {current.filePath && (
+          {(current.fileId || current.filePath) && (
             <>
               <Separator />
               <div className="flex items-center gap-3">
@@ -248,18 +250,26 @@ export function LecturesViewer({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">Qo&apos;shimcha materiallar</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {current.filePath.split("/").pop()}
+                    {current.fileOriginalName || current.filePath?.split("/").pop() || "Fayl"}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_MINIO_URL || "http://localhost:9010"}/${process.env.NEXT_PUBLIC_MINIO_BUCKET || "edu-platform"}/${current.filePath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Yuklab olish
-                  </a>
-                </Button>
+                {current.fileId ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`/api/download/${current.fileId}`} target="_blank" rel="noopener noreferrer">
+                      Yuklab olish
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <a
+                      href={`${process.env.NEXT_PUBLIC_MINIO_URL || "http://localhost:9010"}/${process.env.NEXT_PUBLIC_MINIO_BUCKET || "edu-platform"}/${current.filePath}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Yuklab olish
+                    </a>
+                  </Button>
+                )}
               </div>
             </>
           )}

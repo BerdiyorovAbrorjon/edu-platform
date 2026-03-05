@@ -6,15 +6,17 @@ import { Upload, File, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FileUploadProps {
-  value: string | null;
-  onChange: (filePath: string | null) => void;
+  value: string | null; // fileId
+  displayName?: string | null; // original filename for display
+  lessonId?: string | null;
+  onChange: (fileId: string | null, originalName?: string | null) => void;
 }
 
-export function FileUpload({ value, onChange }: FileUploadProps) {
+export function FileUpload({ value, displayName, lessonId, onChange }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [localName, setLocalName] = useState<string | null>(null);
 
   const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -22,13 +24,13 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
 
     setUploading(true);
     setProgress(0);
-    setFileName(file.name);
+    setLocalName(file.name);
 
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (lessonId) formData.append("lessonId", lessonId);
 
-      // Simulate progress since fetch doesn't support progress natively
       const progressInterval = setInterval(() => {
         setProgress((prev) => Math.min(prev + 15, 90));
       }, 200);
@@ -47,13 +49,13 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
 
       const data = await res.json();
       setProgress(100);
-      onChange(data.filename);
-      setFileName(data.originalName);
+      onChange(data.fileId, data.originalName);
+      setLocalName(data.originalName);
       toast.success("File uploaded successfully");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
-      setFileName(null);
-      onChange(null);
+      setLocalName(null);
+      onChange(null, null);
     } finally {
       setUploading(false);
       setProgress(0);
@@ -62,16 +64,16 @@ export function FileUpload({ value, onChange }: FileUploadProps) {
   };
 
   const handleRemove = () => {
-    onChange(null);
-    setFileName(null);
+    onChange(null, null);
+    setLocalName(null);
   };
 
   if (value) {
-    const displayName = fileName || value.split("/").pop() || "Uploaded file";
+    const shownName = localName || displayName || "Uploaded file";
     return (
       <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
         <File className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm truncate flex-1">{displayName}</span>
+        <span className="text-sm truncate flex-1">{shownName}</span>
         <Button
           type="button"
           variant="ghost"

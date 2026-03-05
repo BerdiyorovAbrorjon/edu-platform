@@ -77,6 +77,8 @@ export async function PUT(
             description: string;
             videoUrl?: string | null;
             filePath?: string | null;
+            fileId?: string | null;
+            fileOriginalName?: string | null;
             order: number;
           },
           index: number
@@ -87,17 +89,30 @@ export async function PUT(
             description: lecture.description ? sanitizeHtml(lecture.description) : "",
             videoUrl: lecture.videoUrl || null,
             filePath: lecture.filePath || null,
+            fileId: lecture.fileId || null,
+            fileOriginalName: lecture.fileOriginalName || null,
             order: lecture.order ?? index + 1,
           };
 
+          let saved;
           if (lecture.id && existingIds.has(lecture.id)) {
-            return prisma.lecture.update({
+            saved = await prisma.lecture.update({
               where: { id: lecture.id },
               data,
             });
           } else {
-            return prisma.lecture.create({ data });
+            saved = await prisma.lecture.create({ data });
           }
+
+          // Link the File record back to this lecture
+          if (lecture.fileId) {
+            await prisma.file.updateMany({
+              where: { id: lecture.fileId, lectureId: null },
+              data: { lectureId: saved.id },
+            });
+          }
+
+          return saved;
         }
       )
     );

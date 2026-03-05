@@ -33,6 +33,7 @@ export async function getFileUrl(filename: string): Promise<string> {
   return await minioClient.presignedGetObject(BUCKET, filename, 7 * 24 * 60 * 60);
 }
 
+
 export async function deleteFile(filename: string): Promise<void> {
   await minioClient.removeObject(BUCKET, filename);
 }

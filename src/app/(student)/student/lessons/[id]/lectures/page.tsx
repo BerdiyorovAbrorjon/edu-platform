@@ -14,6 +14,8 @@ interface Lecture {
   description: string;
   videoUrl: string | null;
   filePath: string | null;
+  fileId: string | null;
+  fileOriginalName: string | null;
   order: number;
 }
 

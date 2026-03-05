@@ -36,6 +36,8 @@ model User {
   progress              StudentProgress[]
   testResults           TestResult[]
   situationalQAResults  SituationalQAResult[]
+  files                 File[]
+  downloads             FileDownload[]
 }
 
 model Account {
@@ -90,6 +92,7 @@ model Lesson {
   situationalQA         SituationalQA[]
   progress              StudentProgress[]
   situationalQAResults  SituationalQAResult[]
+  files                 File[]
 }
 
 model Test {
@@ -109,11 +112,14 @@ model Lecture {
   lessonId    String
   title       String
   description String  @db.Text // Rich HTML content from Tiptap editor
-  videoUrl    String?
-  filePath    String? // MinIO file path
-  order       Int
+  videoUrl         String?
+  filePath         String? // Legacy MinIO file path (backward compat)
+  fileId           String? // Reference to File model (secure downloads)
+  fileOriginalName String? // Display name for the attached file
+  order            Int
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  files  File[]
 }
 
 model SituationalQA {
@@ -166,4 +172,40 @@ model SituationalQAResult {
   situationalQA  SituationalQA @relation(fields: [situationalQAId], references: [id], onDelete: Cascade)
 
   @@unique([userId, situationalQAId])
+}
+
+// ─── File Management Models ────────────────────────────────────
+
+model File {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String   // MinIO object path
+  lessonId     String?
+  lesson       Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lectureId    String?
+  lecture      Lecture? @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  uploadedBy   String
+  uploader     User     @relation(fields: [uploadedBy], references: [id])
+  downloads    FileDownload[]
+  createdAt    DateTime @default(now())
+
+  @@index([lessonId])
+  @@index([lectureId])
+}
+
+model FileDownload {
+  id           String   @id @default(cuid())
+  fileId       String
+  file         File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  downloadedAt DateTime @default(now())
+  ipAddress    String?
+  userAgent    String?
+
+  @@index([fileId])
+  @@index([userId])
 }

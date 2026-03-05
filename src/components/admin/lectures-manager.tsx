@@ -43,7 +43,9 @@ interface LectureItem {
   title: string;
   description: string;
   videoUrl: string;
-  filePath: string | null;
+  filePath: string | null;       // Legacy field (existing lectures)
+  fileId: string | null;         // New secure file reference
+  fileOriginalName: string | null; // Display name for uploaded file
   order: number;
 }
 
@@ -63,6 +65,8 @@ function emptyLecture(order: number): LectureItem {
     description: "",
     videoUrl: "",
     filePath: null,
+    fileId: null,
+    fileOriginalName: null,
     order,
   };
 }
@@ -71,12 +75,14 @@ function SortableLecture({
   lecture,
   index,
   total,
+  lessonId,
   onUpdate,
   onRemove,
 }: {
   lecture: LectureItem;
   index: number;
   total: number;
+  lessonId: string;
   onUpdate: (index: number, field: keyof LectureItem, value: string | null) => void;
   onRemove: (index: number) => void;
 }) {
@@ -171,8 +177,15 @@ function SortableLecture({
           <div className="space-y-2">
             <Label>Attachment</Label>
             <FileUpload
-              value={lecture.filePath}
-              onChange={(path) => onUpdate(index, "filePath", path)}
+              value={lecture.fileId}
+              displayName={lecture.fileOriginalName}
+              lessonId={lessonId}
+              onChange={(fileId, originalName) => {
+                onUpdate(index, "fileId", fileId);
+                onUpdate(index, "fileOriginalName", originalName ?? null);
+                // Clear legacy filePath when a new file is uploaded
+                if (fileId) onUpdate(index, "filePath", null);
+              }}
             />
             <p className="text-xs text-muted-foreground">
               PDF, DOCX, or PPTX (max 50MB)
@@ -207,6 +220,8 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
             ...l,
             _key: nextKey(),
             videoUrl: l.videoUrl || "",
+            fileId: l.fileId ?? null,
+            fileOriginalName: l.fileOriginalName ?? null,
           }))
         );
       } else {
@@ -280,6 +295,8 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
         description: l.description,
         videoUrl: l.videoUrl || null,
         filePath: l.filePath,
+        fileId: l.fileId,
+        fileOriginalName: l.fileOriginalName,
         order: l.order,
       }));
 
@@ -300,6 +317,8 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
           ...l,
           _key: nextKey(),
           videoUrl: l.videoUrl || "",
+          fileId: l.fileId ?? null,
+          fileOriginalName: l.fileOriginalName ?? null,
         }))
       );
       toast.success("Lectures saved successfully");
@@ -358,6 +377,7 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
                 lecture={lecture}
                 index={index}
                 total={lectures.length}
+                lessonId={lessonId}
                 onUpdate={updateLecture}
                 onRemove={removeLecture}
               />
