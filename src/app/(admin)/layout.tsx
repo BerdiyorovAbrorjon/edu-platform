@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/admin/lessons", label: "Lessons", icon: BookOpen },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/lessons", label: "Darslar", icon: BookOpen },
+  { href: "/admin/analytics", label: "Tahlil", icon: BarChart3 },
 ];
 
 function SidebarContent({
@@ -34,7 +34,7 @@ function SidebarContent({
           </div>
           <div>
             <p className="text-sm font-bold text-white">Akme-pedagog</p>
-            <p className="text-xs text-slate-500">Admin Panel</p>
+            <p className="text-xs text-slate-500">Boshqaruv paneli</p>
           </div>
         </Link>
       </div>

@@ -44,16 +44,16 @@ export function FileUpload({ value, displayName, lessonId, onChange }: FileUploa
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data.error || "Yuklashda xatolik");
       }
 
       const data = await res.json();
       setProgress(100);
       onChange(data.fileId, data.originalName);
       setLocalName(data.originalName);
-      toast.success("File uploaded successfully");
+      toast.success("Fayl muvaffaqiyatli yuklandi");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : "Yuklashda xatolik");
       setLocalName(null);
       onChange(null, null);
     } finally {
@@ -69,11 +69,11 @@ export function FileUpload({ value, displayName, lessonId, onChange }: FileUploa
   };
 
   if (value) {
-    const shownName = localName || displayName || "Uploaded file";
+    const shownName = localName || displayName || "Yuklangan fayl";
     return (
       <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
         <File className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm truncate flex-1">{shownName}</span>
+        <span className="text-sm truncate flex-1">{shownName || "Yuklangan fayl"}</span>
         <Button
           type="button"
           variant="ghost"
@@ -108,7 +108,7 @@ export function FileUpload({ value, displayName, lessonId, onChange }: FileUploa
         ) : (
           <Upload className="h-4 w-4" />
         )}
-        {uploading ? "Uploading..." : "Upload File"}
+        {uploading ? "Yuklanmoqda..." : "Fayl yuklash"}
       </Button>
       {uploading && (
         <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">

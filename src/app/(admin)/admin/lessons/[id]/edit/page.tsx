@@ -101,13 +101,13 @@ export default function EditLessonPage() {
       const res = await fetch(`/api/lessons/${params.id}`);
       if (!res.ok) {
         throw new Error(
-          res.status === 404 ? "Lesson not found" : "Failed to load lesson"
+          res.status === 404 ? "Dars topilmadi" : "Darsni yuklashda xatolik"
         );
       }
       const data = await res.json();
       setLesson(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load lesson");
+      setError(err instanceof Error ? err.message : "Darsni yuklashda xatolik");
     } finally {
       setLoading(false);
     }
@@ -135,10 +135,10 @@ export default function EditLessonPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-lg font-semibold text-destructive">
-          {error || "Lesson not found"}
+          {error || "Dars topilmadi"}
         </p>
         <Button asChild variant="outline" className="mt-4">
-          <Link href="/admin/lessons">Back to Lessons</Link>
+          <Link href="/admin/lessons">Darslarga qaytish</Link>
         </Button>
       </div>
     );

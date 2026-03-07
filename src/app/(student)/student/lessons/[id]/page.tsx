@@ -256,7 +256,7 @@ export default function LessonOverviewPage() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-blue-100">Umumiy progress</p>
+              <p className="text-sm text-blue-100">Umumiy holat</p>
               <p className="mt-1 text-2xl font-black">
                 {currentStep === 0 ? 0 : Math.min((currentStep - 1) * 25, 75)}%
               </p>

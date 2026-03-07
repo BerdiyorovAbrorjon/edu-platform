@@ -252,7 +252,7 @@ export default function StudentLessonsPage() {
                   {/* Progress */}
                   <div className="mb-5 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-400">Progress</span>
+                      <span className="text-gray-400">Jarayon</span>
                       <span className="font-semibold text-gray-700">
                         {percent}%
                       </span>

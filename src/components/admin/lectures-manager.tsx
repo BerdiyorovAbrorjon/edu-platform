@@ -126,7 +126,7 @@ function SortableLecture({
               )}
             />
             <CardTitle className="text-base">
-              {lecture.title || `Lecture ${index + 1}`}
+              {lecture.title || `Maruza ${index + 1}`}
             </CardTitle>
           </button>
           <Button
@@ -143,9 +143,9 @@ function SortableLecture({
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label>Sarlavha</Label>
               <Input
-                placeholder="Lecture title..."
+                placeholder="Maruza sarlavhasi..."
                 value={lecture.title}
                 onChange={(e) => onUpdate(index, "title", e.target.value)}
               />
@@ -175,7 +175,7 @@ function SortableLecture({
           </div>
 
           <div className="space-y-2">
-            <Label>Attachment</Label>
+            <Label>Fayl biriktirish</Label>
             <FileUpload
               value={lecture.fileId}
               displayName={lecture.fileOriginalName}
@@ -188,7 +188,7 @@ function SortableLecture({
               }}
             />
             <p className="text-xs text-muted-foreground">
-              PDF, DOCX, or PPTX (max 50MB)
+              PDF, DOCX yoki PPTX (maksimal 50MB)
             </p>
           </div>
         </CardContent>
@@ -272,10 +272,10 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
   };
 
   const validate = (): string | null => {
-    if (lectures.length === 0) return "Add at least one lecture";
+    if (lectures.length === 0) return "Kamida bitta maruza qo'shing";
     for (let i = 0; i < lectures.length; i++) {
       if (!lectures[i].title.trim())
-        return `Lecture ${i + 1}: Title is required`;
+        return `Maruza ${i + 1}: Sarlavha kiritish shart`;
     }
     return null;
   };
@@ -308,7 +308,7 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to save lectures");
+        throw new Error(data.error || "Maruzalarni saqlashda xatolik");
       }
 
       const saved = await res.json();
@@ -321,9 +321,9 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
           fileOriginalName: l.fileOriginalName ?? null,
         }))
       );
-      toast.success("Lectures saved successfully");
+      toast.success("Maruzalar muvaffaqiyatli saqlandi");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      toast.error(err instanceof Error ? err.message : "Saqlashda xatolik");
     } finally {
       setSaving(false);
     }
@@ -352,12 +352,11 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {lectures.length} lecture{lectures.length !== 1 ? "s" : ""} — drag to
-          reorder, click to collapse
+          {lectures.length} ta maruza — tartibni o'zgartirish uchun suring
         </p>
         <Button onClick={addLecture} variant="outline" size="sm">
           <Plus className="h-4 w-4" />
-          Add Lecture
+          Maruza qo'shish
         </Button>
       </div>
 
@@ -393,10 +392,10 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
           ) : (
             <Save className="h-4 w-4" />
           )}
-          Save Lectures
+          Maruzalarni saqlash
         </Button>
         <span className="text-sm text-muted-foreground">
-          {lectures.length} lecture{lectures.length !== 1 ? "s" : ""}
+          {lectures.length} ta maruza
         </span>
       </div>
     </div>

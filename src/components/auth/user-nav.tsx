@@ -66,20 +66,18 @@ export function UserNav() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {isAdmin ? "Sign out?" : "Chiqishni tasdiqlaysizmi?"}
+              Chiqishni tasdiqlaysizmi?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {isAdmin
-                ? "You will be redirected to the login page."
-                : "Tizimdan chiqasiz va kirish sahifasiga yo'naltirilasiz."}
+              Tizimdan chiqasiz va kirish sahifasiga yo&apos;naltirilasiz.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {isAdmin ? "Cancel" : "Bekor qilish"}
+              Bekor qilish
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => signOut({ callbackUrl: "/login" })}>
-              {isAdmin ? "Sign out" : "Chiqish"}
+              Chiqish
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

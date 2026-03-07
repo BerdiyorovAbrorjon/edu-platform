@@ -99,13 +99,13 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
   };
 
   const validate = (): string | null => {
-    if (questions.length === 0) return "Add at least one question";
+    if (questions.length === 0) return "Kamida bitta savol qo'shing";
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      if (!q.question.trim()) return `Question ${i + 1}: Enter the question text`;
+      if (!q.question.trim()) return `Savol ${i + 1}: Savol matnini kiriting`;
       for (let j = 0; j < 4; j++) {
         if (!q.options[j].trim())
-          return `Question ${i + 1}: Fill in option ${OPTION_LABELS[j]}`;
+          return `Savol ${i + 1}: ${OPTION_LABELS[j]} variantini to'ldiring`;
       }
     }
     return null;
@@ -128,13 +128,13 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to save test");
+        throw new Error(data.error || "Testni saqlashda xatolik");
       }
 
       setHasExistingTest(true);
-      toast.success("Test saved successfully");
+      toast.success("Test muvaffaqiyatli saqlandi");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save test");
+      toast.error(err instanceof Error ? err.message : "Testni saqlashda xatolik");
     } finally {
       setSaving(false);
     }
@@ -163,22 +163,22 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {questions.length} question{questions.length !== 1 ? "s" : ""}
-          {hasExistingTest && " (saved)"}
+          {questions.length} ta savol
+          {hasExistingTest && " (saqlangan)"}
         </p>
         <Button onClick={addQuestion} variant="outline" size="sm">
           <Plus className="h-4 w-4" />
-          Add Question
+          Savol qo&apos;shish
         </Button>
       </div>
 
       {questions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground">No questions yet</p>
+            <p className="text-muted-foreground">Hali savollar yo&apos;q</p>
             <Button onClick={addQuestion} variant="outline" className="mt-4">
               <Plus className="h-4 w-4" />
-              Add First Question
+              Birinchi savolni qo&apos;shish
             </Button>
           </CardContent>
         </Card>
@@ -189,7 +189,7 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">
-                    Question {qIndex + 1}
+                    Savol {qIndex + 1}
                   </CardTitle>
                   <Button
                     variant="ghost"
@@ -203,9 +203,9 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Question Text</Label>
+                  <Label>Savol matni</Label>
                   <Input
-                    placeholder="Enter your question..."
+                    placeholder="Savolingizni kiriting..."
                     value={q.question}
                     onChange={(e) =>
                       updateQuestion(qIndex, "question", e.target.value)
@@ -214,7 +214,7 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Answer Options</Label>
+                  <Label>Javob variantlari</Label>
                   <RadioGroup
                     value={String(q.correctAnswer)}
                     onValueChange={(val) =>
@@ -232,7 +232,7 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
                         </span>
                         <Input
                           className="flex-1"
-                          placeholder={`Option ${OPTION_LABELS[optIndex]}...`}
+                          placeholder={`${OPTION_LABELS[optIndex]} variant...`}
                           value={opt}
                           onChange={(e) =>
                             updateOption(qIndex, optIndex, e.target.value)
@@ -242,7 +242,7 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
                     ))}
                   </RadioGroup>
                   <p className="text-xs text-muted-foreground">
-                    Select the radio button next to the correct answer
+                    To&apos;g&apos;ri javob yonidagi tugmani tanlang
                   </p>
                 </div>
               </CardContent>
@@ -258,10 +258,10 @@ export function TestBuilder({ lessonId, testType }: TestBuilderProps) {
           ) : (
             <Save className="h-4 w-4" />
           )}
-          Save Test
+          Testni saqlash
         </Button>
         <span className="text-sm text-muted-foreground">
-          {questions.length} question{questions.length !== 1 ? "s" : ""}
+          {questions.length} ta savol
         </span>
       </div>
     </div>

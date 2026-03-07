@@ -1,8 +1,8 @@
 export default function RegisterPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold">Register</h1>
-      <p className="text-muted-foreground">Create a new account</p>
+      <h1 className="text-2xl font-bold">Ro&apos;yxatdan o&apos;tish</h1>
+      <p className="text-muted-foreground">Yangi hisob yaratish</p>
     </div>
   );
 }

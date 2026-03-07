@@ -56,12 +56,12 @@ export default function AdminLessonsPage() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       const res = await fetch(`/api/lessons?${params}`);
-      if (!res.ok) throw new Error("Failed to load lessons");
+      if (!res.ok) throw new Error("Darslarni yuklashda xatolik");
       const data = await res.json();
       setLessons(data.lessons || []);
     } catch {
       setLessons([]);
-      toast.error("Failed to load lessons");
+      toast.error("Darslarni yuklashda xatolik");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function AdminLessonsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-gray-900">
-            Lessons
+            Darslar
           </h1>
           <p className="mt-1 text-gray-500">
             {!loading && `${lessons.length} ta dars mavjud`}
@@ -90,7 +90,7 @@ export default function AdminLessonsPage() {
         >
           <Link href="/admin/lessons/create">
             <Plus className="h-4 w-4" />
-            Create Lesson
+            Dars yaratish
           </Link>
         </Button>
       </div>
@@ -99,7 +99,7 @@ export default function AdminLessonsPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
-          placeholder="Search lessons..."
+          placeholder="Darslarni qidirish..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="rounded-xl border-gray-200 bg-white pl-10 shadow-sm focus-visible:ring-blue-500"
@@ -119,12 +119,12 @@ export default function AdminLessonsPage() {
             <BookOpen className="h-8 w-8 text-blue-400" />
           </div>
           <h3 className="mb-1 text-lg font-bold text-gray-900">
-            {search ? "No lessons found" : "No lessons yet"}
+            {search ? "Dars topilmadi" : "Hali dars yo'q"}
           </h3>
           <p className="mb-6 max-w-xs text-sm text-gray-500">
             {search
-              ? `No results for "${search}"`
-              : "Get started by creating your first lesson"}
+              ? `"${search}" bo'yicha natija topilmadi`
+              : "Birinchi darsni yaratish orqali boshlang"}
           </p>
           {!search && (
             <Button
@@ -133,7 +133,7 @@ export default function AdminLessonsPage() {
             >
               <Link href="/admin/lessons/create">
                 <Plus className="h-4 w-4" />
-                Create Lesson
+                Dars yaratish
               </Link>
             </Button>
           )}
@@ -183,23 +183,22 @@ export default function AdminLessonsPage() {
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
                   <Video className="h-3 w-3" />
-                  {lesson._count.lectures} lecture
-                  {lesson._count.lectures !== 1 ? "s" : ""}
+                  {lesson._count.lectures} maruza
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-600">
                   <FileText className="h-3 w-3" />
-                  {lesson._count.tests} test{lesson._count.tests !== 1 ? "s" : ""}
+                  {lesson._count.tests} test
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-pink-50 px-2.5 py-1 text-xs font-medium text-pink-600">
                   <MessageSquare className="h-3 w-3" />
-                  {lesson._count.situationalQA} Q&amp;A
+                  {lesson._count.situationalQA} S&amp;J
                 </span>
               </div>
 
               {/* Date */}
               <div className="mt-4 border-t border-gray-50 pt-4">
                 <p className="text-xs text-gray-400">
-                  {new Date(lesson.createdAt).toLocaleDateString("en-US", {
+                  {new Date(lesson.createdAt).toLocaleDateString("uz-UZ", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
