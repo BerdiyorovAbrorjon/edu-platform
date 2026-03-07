@@ -88,8 +88,9 @@ services:
     image: postgres:16-alpine
     container_name: edu-platform-db
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+    # ports exposed only internally — no public access needed
+    expose:
+      - "5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -112,11 +113,11 @@ services:
     container_name: edu-platform-minio
     restart: unless-stopped
     ports:
-      # S3 API — needed so browsers can fetch uploaded files directly.
-      # Put your server IP / domain here, or proxy through nginx.
-      - "${MINIO_PORT:-9000}:9000"
-      # MinIO web console (optional — remove in production if not needed)
+      # MinIO web console for admin management
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      # S3 API port — files stream through app server, not exposed publicly
+      # Uncomment below only if direct MinIO access is needed:
+      # - "${MINIO_PORT:-9000}:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
