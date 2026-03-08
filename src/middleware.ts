@@ -12,7 +12,7 @@ export default withAuth(
     // Root path: redirect authenticated users to their dashboard
     if (pathname === "/") {
       if (token) {
-        const dest = role === "ADMIN" ? "/admin/lessons" : "/student/lessons";
+        const dest = role === "ADMIN" || role === "TEACHER" ? "/admin/lessons" : "/student/lessons";
         console.log(`[middleware] / → ${dest}`);
         return NextResponse.redirect(new URL(dest, req.url));
       }
@@ -20,11 +20,18 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    // Admin routes: require ADMIN role
+    // Admin routes: require ADMIN or TEACHER role
     if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-      if (role !== "ADMIN") {
-        console.log(`[middleware] Non-admin blocked from ${pathname} → /student/lessons`);
+      if (role !== "ADMIN" && role !== "TEACHER") {
+        console.log(`[middleware] Non-admin/teacher blocked from ${pathname} → /student/lessons`);
         return NextResponse.redirect(new URL("/student/lessons", req.url));
+      }
+      // Users management: ADMIN only
+      if (
+        role === "TEACHER" &&
+        (pathname.startsWith("/admin/users") || pathname.startsWith("/api/admin/teacher-emails"))
+      ) {
+        return NextResponse.redirect(new URL("/admin/lessons", req.url));
       }
     }
 

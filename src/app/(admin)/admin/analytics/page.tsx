@@ -12,7 +12,11 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
+  Clock,
+  ArrowLeft,
 } from "lucide-react";
+import { LessonStudents } from "@/components/admin/lesson-students";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +73,13 @@ interface AnalyticsData {
 type SortField = "name" | "completedCount" | "avgScore" | "latestActivity";
 type SortDir = "asc" | "desc";
 
+interface LessonStat {
+  id: string;
+  title: string;
+  completedCount: number;
+  inProgressCount: number;
+}
+
 // ─── Skeleton Loaders ────────────────────────────────────────────────────────
 
 function StatCardSkeleton() {
@@ -109,6 +120,11 @@ export default function AnalyticsPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [refreshing, setRefreshing] = useState(false);
 
+  // Lesson stats drill-down
+  const [lessonStats, setLessonStats] = useState<LessonStat[]>([]);
+  const [lessonStatsLoading, setLessonStatsLoading] = useState(true);
+  const [selectedLesson, setSelectedLesson] = useState<{ id: string; title: string } | null>(null);
+
   const fetchAnalytics = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
@@ -138,6 +154,16 @@ export default function AnalyticsPage() {
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchAnalytics]);
+
+  // Fetch lesson stats
+  useEffect(() => {
+    setLessonStatsLoading(true);
+    fetch("/api/admin/analytics/lessons")
+      .then((r) => r.json())
+      .then((d) => setLessonStats(Array.isArray(d) ? d : []))
+      .catch(() => setLessonStats([]))
+      .finally(() => setLessonStatsLoading(false));
+  }, []);
 
   function toggleSort(field: SortField) {
     if (sortField === field) {
@@ -411,6 +437,93 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Lessons student stats table */}
+      <Card>
+        <CardHeader>
+          {selectedLesson ? (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedLesson(null)}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Darslarga qaytish
+              </button>
+              <span className="text-muted-foreground">/</span>
+              <CardTitle className="text-base">{selectedLesson.title}</CardTitle>
+            </div>
+          ) : (
+            <CardTitle className="text-base">Darslar bo&apos;yicha talabalar</CardTitle>
+          )}
+        </CardHeader>
+        <CardContent>
+          {selectedLesson ? (
+            <LessonStudents lessonId={selectedLesson.id} />
+          ) : lessonStatsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex gap-4 items-center">
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                  <Skeleton className="h-6 w-24 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : lessonStats.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <BookOpen className="h-8 w-8 mb-2 opacity-40" />
+              <p className="text-sm">Hali darslar yo&apos;q</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dars nomi</TableHead>
+                  <TableHead>
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                      Tugatilgan
+                    </span>
+                  </TableHead>
+                  <TableHead>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-blue-400" />
+                      Jarayonda
+                    </span>
+                  </TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lessonStats.map((lesson) => (
+                  <TableRow
+                    key={lesson.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelectedLesson({ id: lesson.id, title: lesson.title })}
+                  >
+                    <TableCell className="font-medium">{lesson.title}</TableCell>
+                    <TableCell>
+                      <Badge className="border-green-200 bg-green-50 text-green-700">
+                        {lesson.completedCount} ta
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="border-blue-200 bg-blue-50 text-blue-700">
+                        {lesson.inProgressCount} ta
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">
+                      Ko&apos;rish →
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Student Performance Table */}
       <Card>

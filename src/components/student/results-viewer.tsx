@@ -61,6 +61,7 @@ interface ResultsViewerProps {
   finalResult: TestResult | null;
   completedAt: string | null;
   situationalResults?: SituationalResult[];
+  adminView?: boolean;
 }
 
 const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
@@ -71,6 +72,7 @@ export function ResultsViewer({
   finalResult,
   completedAt,
   situationalResults,
+  adminView = false,
 }: ResultsViewerProps) {
   const initialScore = initialResult?.score ?? 0;
   const finalScore = finalResult?.score ?? 0;
@@ -113,24 +115,31 @@ export function ResultsViewer({
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      {/* Celebration header */}
-      <div className="text-center space-y-3 py-6">
-        <div className="flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <Trophy className="h-8 w-8 text-green-600" />
+      {/* Celebration header — hidden in admin view */}
+      {!adminView && (
+        <div className="text-center space-y-3 py-6">
+          <div className="flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <Trophy className="h-8 w-8 text-green-600" />
+            </div>
           </div>
-        </div>
-        <h1 className="text-3xl font-bold">Tabriklaymiz!</h1>
-        <p className="text-lg text-muted-foreground">
-          &ldquo;{lesson.title}&rdquo; darsini tugatdingiz
-        </p>
-        <p className="text-sm text-green-700 font-medium">{encouragement}</p>
-        {completionDate && (
-          <p className="text-xs text-muted-foreground">
-            Tugatilgan sana: {completionDate}
+          <h1 className="text-3xl font-bold">Tabriklaymiz!</h1>
+          <p className="text-lg text-muted-foreground">
+            &ldquo;{lesson.title}&rdquo; darsini tugatdingiz
           </p>
-        )}
-      </div>
+          <p className="text-sm text-green-700 font-medium">{encouragement}</p>
+          {completionDate && (
+            <p className="text-xs text-muted-foreground">
+              Tugatilgan sana: {completionDate}
+            </p>
+          )}
+        </div>
+      )}
+      {adminView && completionDate && (
+        <p className="text-xs text-muted-foreground">
+          Tugatilgan sana: {completionDate}
+        </p>
+      )}
 
       {/* Score comparison */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">

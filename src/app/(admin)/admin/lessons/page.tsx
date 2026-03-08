@@ -11,6 +11,7 @@ import {
   FileText,
   Video,
   MessageSquare,
+  UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -195,8 +196,8 @@ export default function AdminLessonsPage() {
                 </span>
               </div>
 
-              {/* Date */}
-              <div className="mt-4 border-t border-gray-50 pt-4">
+              {/* Date + Creator */}
+              <div className="mt-4 border-t border-gray-50 pt-4 flex items-center justify-between gap-2">
                 <p className="text-xs text-gray-400">
                   {new Date(lesson.createdAt).toLocaleDateString("uz-UZ", {
                     year: "numeric",
@@ -204,6 +205,10 @@ export default function AdminLessonsPage() {
                     day: "numeric",
                   })}
                 </p>
+                <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                  <UserRound className="h-3 w-3" />
+                  {lesson.createdBy.name ?? lesson.createdBy.email}
+                </span>
               </div>
             </div>
           ))}

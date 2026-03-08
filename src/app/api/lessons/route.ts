@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "TEACHER")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
 
-    const where = search
+    // TEACHER sees only their own lessons; ADMIN sees all
+    const creatorFilter =
+      session.user.role === "TEACHER" ? { createdById: session.user.id } : {};
+
+    const searchFilter = search
       ? { title: { contains: search, mode: "insensitive" as const } }
       : {};
+
+    const where = { ...creatorFilter, ...searchFilter };
 
     const [lessons, total] = await Promise.all([
       prisma.lesson.findMany({
@@ -42,6 +55,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "TEACHER")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { title, description } = body;
 
@@ -52,27 +70,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get first admin user as creator (temporary until auth is implemented)
-    let creator = await prisma.user.findFirst({
-      where: { role: "ADMIN" },
-    });
-
-    if (!creator) {
-      creator = await prisma.user.findFirst();
-    }
-
-    if (!creator) {
-      return NextResponse.json(
-        { error: "No users found. Please seed the database first." },
-        { status: 500 }
-      );
-    }
-
     const lesson = await prisma.lesson.create({
       data: {
         title,
         description,
-        createdById: creator.id,
+        createdById: session.user.id,
       },
       include: {
         createdBy: { select: { id: true, name: true, email: true } },

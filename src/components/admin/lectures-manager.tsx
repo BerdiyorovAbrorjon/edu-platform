@@ -352,11 +352,11 @@ export function LecturesManager({ lessonId }: LecturesManagerProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {lectures.length} ta maruza — tartibni o'zgartirish uchun suring
+          {lectures.length} ta maruza — tartibni o&apos;zgartirish uchun suring
         </p>
         <Button onClick={addLecture} variant="outline" size="sm">
           <Plus className="h-4 w-4" />
-          Maruza qo'shish
+          Maruza qo&apos;shish
         </Button>
       </div>
 

@@ -12,6 +12,7 @@ import {
   BookOpen,
   MessageSquare,
   GraduationCap,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TestBuilder } from "@/components/admin/test-builder";
 import { LecturesManager } from "@/components/admin/lectures-manager";
 import { SituationalQABuilder } from "@/components/admin/situational-qa-builder";
+import { LessonStudents } from "@/components/admin/lesson-students";
 import { cn } from "@/lib/utils";
 
 interface TestData {
@@ -218,7 +220,7 @@ export default function EditLessonPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="initial-test" className="gap-1.5">
             Dastlabki baholash
             <Badge
@@ -275,6 +277,10 @@ export default function EditLessonPage() {
               {steps[3].count}
             </Badge>
           </TabsTrigger>
+          <TabsTrigger value="students" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            Talabalar
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="initial-test" className="mt-6">
@@ -322,6 +328,18 @@ export default function EditLessonPage() {
               </p>
             </div>
             <TestBuilder lessonId={lesson.id} testType="FINAL" />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="students" className="mt-6">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Talabalar holati</h2>
+              <p className="text-sm text-muted-foreground">
+                Ushbu darsni boshlagan talabalar va ularning natijalari
+              </p>
+            </div>
+            <LessonStudents lessonId={lesson.id} />
           </div>
         </TabsContent>
       </Tabs>

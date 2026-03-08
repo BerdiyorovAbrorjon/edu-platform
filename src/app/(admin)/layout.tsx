@@ -3,23 +3,31 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, BarChart3, Zap, Menu, X } from "lucide-react";
+import { BookOpen, BarChart3, Zap, Menu, X, Users } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { UserNav } from "@/components/auth/user-nav";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const baseNavItems = [
   { href: "/admin/lessons", label: "Darslar", icon: BookOpen },
   { href: "/admin/analytics", label: "Tahlil", icon: BarChart3 },
+];
+
+const adminOnlyNavItems = [
+  { href: "/admin/users", label: "Foydalanuvchilar", icon: Users },
 ];
 
 function SidebarContent({
   pathname,
   onClose,
+  isAdmin,
 }: {
   pathname: string;
   onClose?: () => void;
+  isAdmin: boolean;
 }) {
+  const navItems = isAdmin ? [...baseNavItems, ...adminOnlyNavItems] : baseNavItems;
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -34,13 +42,13 @@ function SidebarContent({
           </div>
           <div>
             <p className="text-sm font-bold text-white">Akme-pedagog</p>
-            <p className="text-xs text-slate-500">Boshqaruv paneli</p>
+            <p className="text-xs text-slate-500">{isAdmin ? "Boshqaruv paneli" : "O'qituvchi paneli"}</p>
           </div>
         </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      {/* Nav — scrollable */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
           Boshqaruv
         </p>
@@ -88,12 +96,14 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: session } = useSession();
+  const isAdmin = session?.user.role === "ADMIN";
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-950 lg:flex lg:flex-col">
-        <SidebarContent pathname={pathname} />
+    <div className="flex h-screen overflow-hidden bg-slate-950">
+      {/* Desktop sidebar — fixed */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-800 bg-slate-950 lg:flex">
+        <SidebarContent pathname={pathname} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile overlay */}
@@ -122,13 +132,14 @@ export default function AdminLayout({
         <SidebarContent
           pathname={pathname}
           onClose={() => setSidebarOpen(false)}
+          isAdmin={isAdmin}
         />
       </aside>
 
-      {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* Main content — offset by sidebar, independently scrollable */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:ml-64">
         {/* Mobile topbar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-800 bg-slate-950/90 px-4 backdrop-blur-xl lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-slate-800 bg-slate-950/90 px-4 backdrop-blur-xl lg:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -144,11 +155,11 @@ export default function AdminLayout({
             </div>
             <span className="font-bold text-white">Akme-pedagog</span>
           </Link>
-          <span className="text-xs text-slate-500">Admin</span>
+          <span className="text-xs text-slate-500">{isAdmin ? "Admin" : "O'qituvchi"}</span>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 bg-gray-50">
+        {/* Page content — scrollable */}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-4 sm:p-8">{children}</div>
         </main>
       </div>
