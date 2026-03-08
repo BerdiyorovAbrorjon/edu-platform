@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, Loader2, Users, CheckCircle2, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ResultsViewer } from "@/components/student/results-viewer";
@@ -70,21 +70,6 @@ function stepLabel(step: number) {
   return STEP_LABELS[step] ?? `Qadam ${step}`;
 }
 
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-xs text-muted-foreground">—</span>;
-  const rounded = Math.round(score);
-  const color =
-    rounded >= 80
-      ? "border-green-200 bg-green-50 text-green-700"
-      : rounded >= 60
-        ? "border-amber-200 bg-amber-50 text-amber-700"
-        : "border-red-200 bg-red-50 text-red-700";
-  return (
-    <Badge className={`border text-xs font-semibold ${color}`}>
-      {rounded}%
-    </Badge>
-  );
-}
 
 export function LessonStudents({ lessonId }: { lessonId: string }) {
   const [students, setStudents] = useState<StudentRow[]>([]);

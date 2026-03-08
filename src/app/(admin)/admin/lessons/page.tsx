@@ -81,8 +81,6 @@ function StatusBadge({ lesson }: { lesson: Lesson }) {
 }
 
 function ContentChips({ lesson }: { lesson: Lesson }) {
-  const hasInitial = lesson._count.tests >= 1;
-  const hasFinal = lesson._count.tests >= 2;
   return (
     <div className="flex flex-wrap gap-1">
       <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">

@@ -30,7 +30,7 @@ export function UserNav() {
   }
 
   const role = session.user.role;
-  var dashboardHref = "";
+  let dashboardHref = "";
   switch (role) {
     case "ADMIN":
       dashboardHref = "/admin/analytics";

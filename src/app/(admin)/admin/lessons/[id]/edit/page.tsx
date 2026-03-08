@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TestBuilder } from "@/components/admin/test-builder";
 import { LecturesManager } from "@/components/admin/lectures-manager";
 import { SituationalQABuilder } from "@/components/admin/situational-qa-builder";
-import { LessonStudents } from "@/components/admin/lesson-students";
+
 import { cn } from "@/lib/utils";
 
 interface TestData {
