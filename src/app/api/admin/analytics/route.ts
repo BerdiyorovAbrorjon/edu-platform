@@ -31,11 +31,13 @@ export async function GET(request: NextRequest) {
       lessonId
         ? { lessonId }
         : teacherLessonIds
-        ? { lessonId: { in: teacherLessonIds } }
-        : {};
+          ? { lessonId: { in: teacherLessonIds } }
+          : {};
+
 
     // --- Overview stats ---
-    const [totalStudents, totalLessons, progressData] = await Promise.all([
+    const [totalTeachers, totalStudents, totalLessons, progressData] = await Promise.all([
+      prisma.user.count({ where: { role: "TEACHER" } }),
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.lesson.count({ where: teacherLessonFilter }),
       prisma.studentProgress.findMany({
@@ -74,8 +76,8 @@ export async function GET(request: NextRequest) {
     const avgImprovement =
       improvements.length > 0
         ? Math.round(
-            (improvements.reduce((a, b) => a + b, 0) / improvements.length) * 10
-          ) / 10
+          (improvements.reduce((a, b) => a + b, 0) / improvements.length) * 10
+        ) / 10
         : 0;
 
     // --- Completion chart (daily completions over date range) ---
@@ -200,6 +202,7 @@ export async function GET(request: NextRequest) {
     const totalStudentsCount = await prisma.user.count({ where: { role: "STUDENT" } });
 
     return NextResponse.json({
+      totalTeachers,
       totalStudents,
       totalLessons,
       completionRate,

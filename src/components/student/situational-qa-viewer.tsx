@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn, getScoreColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface Answer {
   text: string;
@@ -35,14 +35,22 @@ interface SituationalQAViewerProps {
   currentStep: number;
 }
 
-const ANSWER_STYLES = [
-  { letter: "A", bg: "hover:bg-blue-50 hover:border-blue-300", selected: "bg-blue-50 border-blue-400 ring-1 ring-blue-200", badge: "bg-blue-100 text-blue-800 border-blue-200" },
-  { letter: "B", bg: "hover:bg-green-50 hover:border-green-300", selected: "bg-green-50 border-green-400 ring-1 ring-green-200", badge: "bg-green-100 text-green-800 border-green-200" },
-  { letter: "C", bg: "hover:bg-amber-50 hover:border-amber-300", selected: "bg-amber-50 border-amber-400 ring-1 ring-amber-200", badge: "bg-amber-100 text-amber-800 border-amber-200" },
-  { letter: "D", bg: "hover:bg-purple-50 hover:border-purple-300", selected: "bg-purple-50 border-purple-400 ring-1 ring-purple-200", badge: "bg-purple-100 text-purple-800 border-purple-200" },
-  { letter: "E", bg: "hover:bg-pink-50 hover:border-pink-300", selected: "bg-pink-50 border-pink-400 ring-1 ring-pink-200", badge: "bg-pink-100 text-pink-800 border-pink-200" },
-  { letter: "F", bg: "hover:bg-indigo-50 hover:border-indigo-300", selected: "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-200", badge: "bg-indigo-100 text-indigo-800 border-indigo-200" },
-];
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+function scoreStyle(score: number) {
+  if (score >= 4) return { btn: "bg-green-50 border-green-400", badge: "bg-green-100 text-green-700 border-green-200" };
+  if (score >= 2) return { btn: "bg-amber-50 border-amber-400", badge: "bg-amber-100 text-amber-700 border-amber-200" };
+  return { btn: "bg-red-50 border-red-400", badge: "bg-red-100 text-red-700 border-red-200" };
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export function SituationalQAViewer({
   questions,
@@ -56,6 +64,13 @@ export function SituationalQAViewer({
   const [scores, setScores] = useState<Map<number, number>>(new Map());
   const [completing, setCompleting] = useState(false);
   const conclusionRef = useRef<HTMLDivElement>(null);
+
+  // Har savol uchun bir marta aralashtirilgan tartib (mount da)
+  const shuffledOrders = useMemo(
+    () => questions.map((q) => shuffle(q.answers.map((_, i) => i))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const total = questions.length;
   const current = questions[currentIndex];
@@ -191,8 +206,8 @@ export function SituationalQAViewer({
                     isCurrent
                       ? "w-6 bg-primary"
                       : isCompleted
-                      ? "w-2.5 bg-green-400 hover:bg-green-500 cursor-pointer"
-                      : "w-2.5 bg-muted cursor-not-allowed"
+                        ? "w-2.5 bg-green-400 hover:bg-green-500 cursor-pointer"
+                        : "w-2.5 bg-muted cursor-not-allowed"
                   )}
                 />
               );
@@ -218,26 +233,28 @@ export function SituationalQAViewer({
         </CardContent>
       </Card>
 
-      {/* Answer options */}
+      {/* Answer options — shuffled order */}
       <div className="space-y-2.5">
-        {current.answers.map((answer, aIdx) => {
-          const style = ANSWER_STYLES[aIdx];
-          const isPending = pendingAnswer === aIdx && !isConfirmed;
-          const isSelectedConfirmed = currentConfirmedAnswer === aIdx;
+        {(shuffledOrders[currentIndex] ?? current.answers.map((_, i) => i)).map((origIdx, displayPos) => {
+          const answer = current.answers[origIdx];
+          const letter = LETTERS[displayPos] ?? String(displayPos + 1);
+          const isPending = pendingAnswer === origIdx && !isConfirmed;
+          const isSelectedConfirmed = currentConfirmedAnswer === origIdx;
           const isDisabled = isConfirmed && !isSelectedConfirmed;
+          const sStyle = isSelectedConfirmed ? scoreStyle(answer.score) : null;
 
           return (
-            <div key={aIdx}>
+            <div key={origIdx}>
               <button
                 type="button"
-                onClick={() => selectAnswer(aIdx)}
+                onClick={() => selectAnswer(origIdx)}
                 disabled={isConfirmed}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
-                  !isConfirmed && !isPending && style?.bg,
+                  !isConfirmed && !isPending && "border-gray-200 bg-blue-50 hover:bg-gray-100 hover:border-gray-300",
                   isPending && "border-primary bg-primary/5 ring-1 ring-primary",
-                  isSelectedConfirmed && style?.selected,
-                  isDisabled && "opacity-50",
+                  isSelectedConfirmed && sStyle?.btn,
+                  isDisabled && "border-gray-100 bg-blue-50 opacity-40",
                   !isConfirmed && "cursor-pointer",
                   isConfirmed && !isSelectedConfirmed && "cursor-default"
                 )}
@@ -248,18 +265,18 @@ export function SituationalQAViewer({
                     isPending
                       ? "border-primary bg-primary text-primary-foreground"
                       : isSelectedConfirmed
-                      ? style?.badge
-                      : "bg-muted text-muted-foreground"
+                        ? sStyle?.badge
+                        : "border-gray-300 bg-gray-100 text-gray-500"
                   )}
                 >
-                  {style?.letter}
+                  {letter}
                 </span>
                 <span className="text-base leading-relaxed pt-0.5 flex-1">
                   {answer.text}
                 </span>
                 {isSelectedConfirmed && (
                   <div className="flex items-center gap-2 shrink-0 mt-1">
-                    <Badge className={cn("text-xs", getScoreColor(answer.score))}>
+                    <Badge className={cn("text-xs border", sStyle?.badge)}>
                       {answer.score}/5
                     </Badge>
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -267,7 +284,7 @@ export function SituationalQAViewer({
                 )}
               </button>
 
-              {/* Conclusion - appears below confirmed answer */}
+              {/* Conclusion */}
               {isSelectedConfirmed && (
                 <div
                   ref={conclusionRef}
@@ -278,9 +295,7 @@ export function SituationalQAViewer({
                       <div className="flex items-start gap-3">
                         <Lightbulb className="h-5 w-5 shrink-0 text-blue-600 mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-blue-900 mb-1">
-                            Xulosa
-                          </p>
+                          <p className="text-sm font-semibold text-blue-900 mb-1">Xulosa</p>
                           <p className="text-sm leading-relaxed text-blue-800">
                             {answer.conclusion}
                           </p>

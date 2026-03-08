@@ -12,11 +12,7 @@ import {
   ChevronsUpDown,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  Clock,
-  ArrowLeft,
 } from "lucide-react";
-import { LessonStudents } from "@/components/admin/lesson-students";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fmtDate } from "@/lib/utils";
 import {
   ResponsiveContainer,
   LineChart,
@@ -46,6 +43,7 @@ import {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface AnalyticsData {
+  totalTeachers: number;
   totalStudents: number;
   totalLessons: number;
   completionRate: number;
@@ -72,13 +70,6 @@ interface AnalyticsData {
 
 type SortField = "name" | "completedCount" | "avgScore" | "latestActivity";
 type SortDir = "asc" | "desc";
-
-interface LessonStat {
-  id: string;
-  title: string;
-  completedCount: number;
-  inProgressCount: number;
-}
 
 // ─── Skeleton Loaders ────────────────────────────────────────────────────────
 
@@ -120,11 +111,6 @@ export default function AnalyticsPage() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [refreshing, setRefreshing] = useState(false);
 
-  // Lesson stats drill-down
-  const [lessonStats, setLessonStats] = useState<LessonStat[]>([]);
-  const [lessonStatsLoading, setLessonStatsLoading] = useState(true);
-  const [selectedLesson, setSelectedLesson] = useState<{ id: string; title: string } | null>(null);
-
   const fetchAnalytics = useCallback(
     async (isRefresh = false) => {
       if (isRefresh) setRefreshing(true);
@@ -155,16 +141,6 @@ export default function AnalyticsPage() {
     return () => window.removeEventListener("focus", onFocus);
   }, [fetchAnalytics]);
 
-  // Fetch lesson stats
-  useEffect(() => {
-    setLessonStatsLoading(true);
-    fetch("/api/admin/analytics/lessons")
-      .then((r) => r.json())
-      .then((d) => setLessonStats(Array.isArray(d) ? d : []))
-      .catch(() => setLessonStats([]))
-      .finally(() => setLessonStatsLoading(false));
-  }, []);
-
   function toggleSort(field: SortField) {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -185,25 +161,27 @@ export default function AnalyticsPage() {
 
   const sortedStudents = data
     ? [...data.studentsList].sort((a, b) => {
-        const mul = sortDir === "asc" ? 1 : -1;
-        if (sortField === "name") {
-          return mul * (a.name ?? "").localeCompare(b.name ?? "");
-        }
-        if (sortField === "completedCount") {
-          return mul * (a.completedCount - b.completedCount);
-        }
-        if (sortField === "avgScore") {
-          return mul * ((a.avgScore ?? -1) - (b.avgScore ?? -1));
-        }
-        // latestActivity
-        const ta = a.latestActivity ? new Date(a.latestActivity).getTime() : 0;
-        const tb = b.latestActivity ? new Date(b.latestActivity).getTime() : 0;
-        return mul * (ta - tb);
-      })
+      const mul = sortDir === "asc" ? 1 : -1;
+      if (sortField === "name") {
+        return mul * (a.name ?? "").localeCompare(b.name ?? "");
+      }
+      if (sortField === "completedCount") {
+        return mul * (a.completedCount - b.completedCount);
+      }
+      if (sortField === "avgScore") {
+        return mul * ((a.avgScore ?? -1) - (b.avgScore ?? -1));
+      }
+      // latestActivity
+      const ta = a.latestActivity ? new Date(a.latestActivity).getTime() : 0;
+      const tb = b.latestActivity ? new Date(b.latestActivity).getTime() : 0;
+      return mul * (ta - tb);
+    })
     : [];
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("uz-UZ", { month: "short", day: "numeric" });
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}`;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -222,11 +200,10 @@ export default function AnalyticsPage() {
               <button
                 key={r}
                 onClick={() => { setDateRange(r); setPage(1); }}
-                className={`px-3 py-1.5 transition-colors ${
-                  dateRange === r
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
+                className={`px-3 py-1.5 transition-colors ${dateRange === r
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+                  }`}
               >
                 {r === "7d" ? "7 kun" : r === "30d" ? "30 kun" : "90 kun"}
               </button>
@@ -259,6 +236,19 @@ export default function AnalyticsPage() {
               <CardContent>
                 <div className="text-3xl font-bold">{data?.totalStudents ?? 0}</div>
                 <p className="text-xs text-muted-foreground mt-1">Ro&apos;yxatdan o&apos;tgan talabalar</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Jami o'qituvchilar
+                </CardTitle>
+                <Users className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{data?.totalTeachers ?? 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">Ro&apos;yxatdan o&apos;tgan o&apos;qituvchilar</p>
               </CardContent>
             </Card>
 
@@ -438,93 +428,6 @@ export default function AnalyticsPage() {
         </Card>
       )}
 
-      {/* Lessons student stats table */}
-      <Card>
-        <CardHeader>
-          {selectedLesson ? (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedLesson(null)}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Darslarga qaytish
-              </button>
-              <span className="text-muted-foreground">/</span>
-              <CardTitle className="text-base">{selectedLesson.title}</CardTitle>
-            </div>
-          ) : (
-            <CardTitle className="text-base">Darslar bo&apos;yicha talabalar</CardTitle>
-          )}
-        </CardHeader>
-        <CardContent>
-          {selectedLesson ? (
-            <LessonStudents lessonId={selectedLesson.id} />
-          ) : lessonStatsLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex gap-4 items-center">
-                  <Skeleton className="h-4 flex-1" />
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                </div>
-              ))}
-            </div>
-          ) : lessonStats.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-              <BookOpen className="h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">Hali darslar yo&apos;q</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dars nomi</TableHead>
-                  <TableHead>
-                    <span className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                      Tugatilgan
-                    </span>
-                  </TableHead>
-                  <TableHead>
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-blue-400" />
-                      Jarayonda
-                    </span>
-                  </TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lessonStats.map((lesson) => (
-                  <TableRow
-                    key={lesson.id}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => setSelectedLesson({ id: lesson.id, title: lesson.title })}
-                  >
-                    <TableCell className="font-medium">{lesson.title}</TableCell>
-                    <TableCell>
-                      <Badge className="border-green-200 bg-green-50 text-green-700">
-                        {lesson.completedCount} ta
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="border-blue-200 bg-blue-50 text-blue-700">
-                        {lesson.inProgressCount} ta
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">
-                      Ko&apos;rish →
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Student Performance Table */}
       <Card>
         <CardHeader>
@@ -611,8 +514,8 @@ export default function AnalyticsPage() {
                               student.avgScore >= 80
                                 ? "text-green-600 font-medium"
                                 : student.avgScore >= 60
-                                ? "text-amber-600 font-medium"
-                                : "text-red-600 font-medium"
+                                  ? "text-amber-600 font-medium"
+                                  : "text-red-600 font-medium"
                             }
                           >
                             {student.avgScore}%
@@ -622,9 +525,7 @@ export default function AnalyticsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {student.latestActivity
-                          ? new Date(student.latestActivity).toLocaleDateString()
-                          : "—"}
+                        {fmtDate(student.latestActivity)}
                       </TableCell>
                     </TableRow>
                   ))}

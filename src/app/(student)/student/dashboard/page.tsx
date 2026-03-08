@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fmtDate } from "@/lib/utils";
 import {
   ResponsiveContainer,
   LineChart,
@@ -353,9 +354,7 @@ export default function StudentDashboardPage() {
                       </p>
                       {lesson.completedAt && (
                         <p className="text-xs text-gray-400">
-                          {new Date(lesson.completedAt).toLocaleDateString(
-                            "uz-UZ"
-                          )}
+                          {fmtDate(lesson.completedAt)}
                         </p>
                       )}
                     </div>

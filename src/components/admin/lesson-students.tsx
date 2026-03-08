@@ -77,8 +77,8 @@ function ScoreBadge({ score }: { score: number | null }) {
     rounded >= 80
       ? "border-green-200 bg-green-50 text-green-700"
       : rounded >= 60
-      ? "border-amber-200 bg-amber-50 text-amber-700"
-      : "border-red-200 bg-red-50 text-red-700";
+        ? "border-amber-200 bg-amber-50 text-amber-700"
+        : "border-red-200 bg-red-50 text-red-700";
   return (
     <Badge className={`border text-xs font-semibold ${color}`}>
       {rounded}%
@@ -261,7 +261,7 @@ export function LessonStudents({ lessonId }: { lessonId: string }) {
 
         {/* Scores */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex flex-col items-end gap-0.5">
+          {/* <div className="flex flex-col items-end gap-0.5">
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <span>Boshlanğich</span>
               <ScoreBadge score={student.initialScore} />
@@ -270,7 +270,7 @@ export function LessonStudents({ lessonId }: { lessonId: string }) {
               <span>Yakuniy</span>
               <ScoreBadge score={student.finalScore} />
             </div>
-          </div>
+          </div> */}
 
           {/* Status badge */}
           {isCompleted ? (

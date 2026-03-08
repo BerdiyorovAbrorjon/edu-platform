@@ -29,8 +29,20 @@ export function UserNav() {
     );
   }
 
-  const isAdmin = session.user.role === "ADMIN";
-  const dashboardHref = isAdmin ? "/admin/analytics" : "/student/dashboard";
+  const role = session.user.role;
+  var dashboardHref = "";
+  switch (role) {
+    case "ADMIN":
+      dashboardHref = "/admin/analytics";
+      break;
+    case "TEACHER":
+      dashboardHref = "/teacher/lessons";
+      break;
+    case "STUDENT":
+      dashboardHref = "/student/dashboard";
+      break;
+  }
+
   const initials = session.user.name
     ? session.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
@@ -38,10 +50,6 @@ export function UserNav() {
   return (
     <>
       <div className="flex items-center gap-3">
-        <div className="hidden sm:block text-right">
-          <p className="text-sm font-medium leading-none">{session.user.name}</p>
-          <p className="text-xs text-muted-foreground">{session.user.email}</p>
-        </div>
         <Link href={dashboardHref} aria-label="Go to dashboard">
           <Avatar className="h-8 w-8 cursor-pointer">
             <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
@@ -50,15 +58,18 @@ export function UserNav() {
             </AvatarFallback>
           </Avatar>
         </Link>
+        <div className="hidden sm:block text-left min-w-0 flex-1">
+          <p className="text-sm text-muted-foreground truncate">{session.user.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
+        </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => setShowLogoutDialog(true)}
-          className="gap-1 text-muted-foreground hover:text-foreground"
+          className="gap-1 text-muted-foreground hover:text-foreground shrink-0"
           aria-label="Sign out"
         >
           <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Chiqish</span>
         </Button>
       </div>
 

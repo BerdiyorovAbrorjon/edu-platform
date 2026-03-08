@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -30,16 +29,9 @@ const lessonSchema = z.object({
 
 type LessonFormData = z.infer<typeof lessonSchema>;
 
-export default function CreateLessonPage() {
+export default function TeacherCreateLessonPage() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (session && session.user.role !== "TEACHER") {
-      router.replace("/admin/lessons");
-    }
-  }, [session, router]);
 
   const {
     register,
@@ -69,7 +61,7 @@ export default function CreateLessonPage() {
 
       const lesson = await res.json();
       toast.success("Dars muvaffaqiyatli yaratildi");
-      router.push(`/admin/lessons/${lesson.id}/edit`);
+      router.push(`/teacher/lessons/${lesson.id}/edit`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Dars yaratishda xatolik"
@@ -83,7 +75,7 @@ export default function CreateLessonPage() {
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/lessons">
+          <Link href="/teacher/lessons">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -139,7 +131,7 @@ export default function CreateLessonPage() {
                 Dars yaratish
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/admin/lessons">Bekor qilish</Link>
+                <Link href="/teacher/lessons">Bekor qilish</Link>
               </Button>
             </div>
           </form>

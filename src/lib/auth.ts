@@ -24,43 +24,6 @@ export const authOptions: NextAuthOptions = {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
-  events: {
-    async createUser({ user }) {
-      const adminEmails = getAdminEmails();
-      const userEmail = user.email ?? "";
-
-      console.log("🆕 New user created:", userEmail);
-
-      try {
-        if (adminEmails.length > 0) {
-          const isAdmin = adminEmails.includes(userEmail);
-          if (isAdmin) {
-            console.log("✅ Email in ADMIN_EMAILS — setting ADMIN");
-            await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-            return;
-          }
-        } else {
-          const userCount = await prisma.user.count();
-          if (userCount === 1) {
-            console.log("✅ First user — setting ADMIN");
-            await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-            return;
-          }
-        }
-
-        // Check if email is pre-registered as teacher
-        const teacherEmail = await prisma.teacherEmail.findUnique({
-          where: { email: userEmail },
-        });
-        if (teacherEmail) {
-          console.log("✅ Email in TeacherEmails — setting TEACHER");
-          await prisma.user.update({ where: { id: user.id }, data: { role: "TEACHER" } });
-        }
-      } catch (error) {
-        console.error("❌ Error updating user role:", error);
-      }
-    },
-  },
   callbacks: {
     async redirect({ url, baseUrl }) {
       console.log("[auth] redirect callback:", { url, baseUrl });
@@ -68,33 +31,54 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, user, trigger }) {
-      if (user || trigger === "signIn") {
+    async jwt({ token, user }) {
+      // token.id ni normalize qil (eski sessiyalarda faqat token.sub bor)
+      if (!token.id && token.sub) token.id = token.sub;
+
+      const userId = (user?.id ?? token.id) as string | undefined;
+      if (!userId) return token;
+
+      try {
         const dbUser = await prisma.user.findUnique({
-          where: { id: (user?.id ?? token.id) as string },
+          where: { id: userId },
           select: { id: true, email: true, role: true },
         });
-        if (dbUser) {
-          // Upgrade STUDENT → TEACHER if email is in TeacherEmail list
-          if (dbUser.role === "STUDENT") {
-            const teacherEntry = await prisma.teacherEmail.findUnique({
-              where: { email: dbUser.email },
-            });
-            if (teacherEntry) {
-              console.log("⬆️ Upgrading STUDENT to TEACHER:", dbUser.email);
-              await prisma.user.update({
-                where: { id: dbUser.id },
-                data: { role: "TEACHER" },
-              });
-              token.id = dbUser.id;
-              token.role = "TEACHER";
-              return token;
+
+        if (!dbUser) return token;
+
+        let role = dbUser.role;
+
+        // Yangi foydalanuvchi: STUDENT ni admin/teacher ga upgrade qilish
+        if (user && role === "STUDENT") {
+          const email = dbUser.email ?? "";
+          const adminEmails = getAdminEmails();
+
+          if (adminEmails.length > 0 && adminEmails.includes(email)) {
+            await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+            role = "ADMIN";
+          } else if (adminEmails.length === 0) {
+            const userCount = await prisma.user.count();
+            if (userCount === 1) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+              role = "ADMIN";
             }
           }
-          token.id = dbUser.id;
-          token.role = dbUser.role;
+
+          if (role === "STUDENT") {
+            const teacherEntry = await prisma.teacherEmail.findUnique({ where: { email } });
+            if (teacherEntry) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "TEACHER" } });
+              role = "TEACHER";
+            }
+          }
         }
+
+        token.id = dbUser.id;
+        token.role = role;
+      } catch (err) {
+        console.error("JWT callback DB error:", err);
       }
+
       return token;
     },
     async session({ session, token }) {

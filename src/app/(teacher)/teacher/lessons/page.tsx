@@ -4,7 +4,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
+  Plus,
   Search,
+  Pencil,
+  Trash2,
   Eye,
   CheckCircle2,
   XCircle,
@@ -28,6 +31,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LessonStudents } from "@/components/admin/lesson-students";
 import { fmtDate } from "@/lib/utils";
 
@@ -42,12 +55,6 @@ interface Lesson {
   finalQuestionCount: number;
   completedCount: number;
   inProgressCount: number;
-}
-
-interface Teacher {
-  id: string;
-  name: string | null;
-  email: string;
 }
 
 type StudentsDialogState =
@@ -107,55 +114,68 @@ function TableSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 rounded-lg border bg-white p-4">
           <Skeleton className="h-4 flex-1" />
-          <Skeleton className="h-4 w-32" />
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-48" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-20" />
         </div>
       ))}
     </div>
   );
 }
 
-export default function AdminLessonsPage() {
+export default function TeacherLessonsPage() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
-
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [teacherFilter, setTeacherFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [studentsDialog, setStudentsDialog] = useState<StudentsDialogState>({ open: false });
   const [viewDialog, setViewDialog] = useState<ViewDialogState>({ open: false });
+  const [deleteLesson, setDeleteLesson] = useState<Lesson | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchLessons = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
-      if (teacherFilter) params.set("teacher", teacherFilter);
       const res = await fetch(`/api/lessons?${params}`);
       if (!res.ok) throw new Error("Darslarni yuklashda xatolik");
       const data = await res.json();
       setLessons(data.lessons || []);
-      if (data.teachers) setTeachers(data.teachers);
     } catch {
       setLessons([]);
       toast.error("Darslarni yuklashda xatolik");
     } finally {
       setLoading(false);
     }
-  }, [search, teacherFilter]);
+  }, [search]);
 
   useEffect(() => {
     const timeout = setTimeout(fetchLessons, 300);
     return () => clearTimeout(timeout);
   }, [fetchLessons]);
+
+  const handleDelete = async () => {
+    if (!deleteLesson) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/lessons/${deleteLesson.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("O'chirishda xatolik");
+      toast.success("Dars o'chirildi");
+      setDeleteLesson(null);
+      fetchLessons();
+    } catch {
+      toast.error("Darsni o'chirishda xatolik yuz berdi");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredLessons = statusFilter
     ? lessons.filter((l) =>
@@ -173,6 +193,15 @@ export default function AdminLessonsPage() {
             {!loading && `${filteredLessons.length} ta dars`}
           </p>
         </div>
+        <Button
+          asChild
+          className="gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:to-violet-700"
+        >
+          <Link href="/teacher/lessons/create">
+            <Plus className="h-4 w-4" />
+            Dars yaratish
+          </Link>
+        </Button>
       </div>
 
       {/* Filters */}
@@ -186,22 +215,6 @@ export default function AdminLessonsPage() {
             className="rounded-xl border-gray-200 bg-white pl-10 shadow-sm focus-visible:ring-blue-500"
           />
         </div>
-
-        {/* Teacher filter - admin only */}
-        {isAdmin && teachers.length > 0 && (
-          <select
-            value={teacherFilter}
-            onChange={(e) => setTeacherFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Barcha o&apos;qituvchilar</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name ?? t.email}
-              </option>
-            ))}
-          </select>
-        )}
 
         {/* Status filter */}
         <select
@@ -221,8 +234,19 @@ export default function AdminLessonsPage() {
       ) : filteredLessons.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white py-24 text-center">
           <p className="text-lg font-semibold text-gray-500">
-            {search ? `"${search}" bo'yicha natija topilmadi` : "Hali dars mavjud emas"}
+            {search ? `"${search}" bo'yicha natija topilmadi` : "Hali dars yo'q"}
           </p>
+          {!search && (
+            <Button
+              asChild
+              className="mt-4 gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600"
+            >
+              <Link href="/teacher/lessons/create">
+                <Plus className="h-4 w-4" />
+                Dars yaratish
+              </Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -230,79 +254,101 @@ export default function AdminLessonsPage() {
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="font-semibold">Nomi</TableHead>
-                {isAdmin && <TableHead className="font-semibold">O&apos;qituvchi</TableHead>}
                 <TableHead className="font-semibold">Holati</TableHead>
                 <TableHead className="font-semibold">Tarkibi</TableHead>
                 <TableHead className="font-semibold">Sana</TableHead>
                 <TableHead className="font-semibold text-center">Yakunlagan</TableHead>
                 <TableHead className="font-semibold text-center">Jarayonda</TableHead>
                 <TableHead className="font-semibold text-center">Ko&apos;rish</TableHead>
+                <TableHead className="font-semibold text-center">Amallar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredLessons.map((lesson) => (
-                <TableRow key={lesson.id} className="hover:bg-gray-50/50">
-                  <TableCell>
-                    <p className="font-medium text-gray-900 max-w-[200px] truncate">
-                      {lesson.title}
-                    </p>
-                  </TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-sm text-gray-600">
-                      {lesson.createdBy.name ?? lesson.createdBy.email}
+              {filteredLessons.map((lesson) => {
+                const isOwn = session?.user?.id === lesson.createdBy.id;
+                return (
+                  <TableRow key={lesson.id} className="hover:bg-gray-50/50">
+                    <TableCell>
+                      <p className="font-medium text-gray-900 max-w-[200px] truncate">
+                        {lesson.title}
+                      </p>
                     </TableCell>
-                  )}
-                  <TableCell>
-                    <StatusBadge lesson={lesson} />
-                  </TableCell>
-                  <TableCell>
-                    <ContentChips lesson={lesson} />
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500 whitespace-nowrap">
-                    {fmtDate(lesson.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setStudentsDialog({
-                          open: true,
-                          lessonId: lesson.id,
-                          lessonTitle: lesson.title,
-                        })
-                      }
-                      className="inline-flex items-center justify-center rounded-lg bg-green-50 px-3 py-1 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors"
-                    >
-                      {lesson.completedCount} ta
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setStudentsDialog({
-                          open: true,
-                          lessonId: lesson.id,
-                          lessonTitle: lesson.title,
-                        })
-                      }
-                      className="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                    >
-                      {lesson.inProgressCount} ta
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setViewDialog({ open: true, lesson })}
-                      className="h-8 w-8 rounded-lg hover:bg-gray-100"
-                    >
-                      <Eye className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <StatusBadge lesson={lesson} />
+                    </TableCell>
+                    <TableCell>
+                      <ContentChips lesson={lesson} />
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500 whitespace-nowrap">
+                      {fmtDate(lesson.createdAt)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStudentsDialog({
+                            open: true,
+                            lessonId: lesson.id,
+                            lessonTitle: lesson.title,
+                          })
+                        }
+                        className="inline-flex items-center justify-center rounded-lg bg-green-50 px-3 py-1 text-sm font-semibold text-green-700 hover:bg-green-100 transition-colors"
+                      >
+                        {lesson.completedCount} ta
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStudentsDialog({
+                            open: true,
+                            lessonId: lesson.id,
+                            lessonTitle: lesson.title,
+                          })
+                        }
+                        className="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        {lesson.inProgressCount} ta
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setViewDialog({ open: true, lesson })}
+                        className="h-8 w-8 rounded-lg hover:bg-gray-100"
+                      >
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {isOwn && (
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            asChild
+                            className="h-8 w-8 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                          >
+                            <Link href={`/teacher/lessons/${lesson.id}/edit`}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600"
+                            onClick={() => setDeleteLesson(lesson)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -344,10 +390,8 @@ export default function AdminLessonsPage() {
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
                 <p className="text-sm font-semibold">Tarkib:</p>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-muted-foreground">Dastlabki test:</span>
-                  <span className="font-medium">{viewDialog.lesson.initialQuestionCount} ta</span>
-                  <span className="text-muted-foreground">Yakuniy test:</span>
-                  <span className="font-medium">{viewDialog.lesson.finalQuestionCount} ta</span>
+                  <span className="text-muted-foreground">Testlar:</span>
+                  <span className="font-medium">{viewDialog.lesson._count.tests} ta</span>
                   <span className="text-muted-foreground">Maruzalar:</span>
                   <span className="font-medium">{viewDialog.lesson._count.lectures} ta</span>
                   <span className="text-muted-foreground">S&amp;J:</span>
@@ -356,7 +400,7 @@ export default function AdminLessonsPage() {
               </div>
               <div className="flex justify-end">
                 <Button asChild variant="outline">
-                  <Link href={`/admin/lessons/${viewDialog.lesson.id}/edit`}>
+                  <Link href={`/teacher/lessons/${viewDialog.lesson.id}/edit`}>
                     Tahrirlash
                   </Link>
                 </Button>
@@ -365,6 +409,32 @@ export default function AdminLessonsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deleteLesson}
+        onOpenChange={(open) => !open && setDeleteLesson(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Darsni o&apos;chirish</AlertDialogTitle>
+            <AlertDialogDescription>
+              &quot;{deleteLesson?.title}&quot; darsini o&apos;chirishni tasdiqlaysizmi? Bu amalni
+              bekor qilib bo&apos;lmaydi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "O'chirilmoqda..." : "O'chirish"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

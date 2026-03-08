@@ -9,7 +9,9 @@ export default async function LoginPage() {
 
   if (session) {
     if (session.user.role === "ADMIN") {
-      redirect("/admin/lessons");
+      redirect("/admin/analytics");
+    } else if (session.user.role === "TEACHER") {
+      redirect("/teacher/lessons");
     } else {
       redirect("/student/lessons");
     }

@@ -3,16 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { BookOpen, Zap, Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { BookOpen, BarChart3, Zap, Menu, X, Users } from "lucide-react";
 import { UserNav } from "@/components/auth/user-nav";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/admin/analytics", label: "Tahlil", icon: BarChart3 },
-  { href: "/admin/lessons", label: "Darslar", icon: BookOpen },
-  { href: "/admin/users", label: "Foydalanuvchilar", icon: Users },
+  { href: "/teacher/lessons", label: "Darslar", icon: BookOpen },
 ];
 
 function SidebarContent({
@@ -27,7 +25,7 @@ function SidebarContent({
       {/* Header */}
       <div className="border-b border-slate-800 px-6 py-5">
         <Link
-          href="/admin/lessons"
+          href="/teacher/lessons"
           onClick={onClose}
           className="flex items-center gap-2.5"
         >
@@ -36,7 +34,7 @@ function SidebarContent({
           </div>
           <div>
             <p className="text-sm font-bold text-white">Akme-pedagog</p>
-            <p className="text-xs text-slate-500">Boshqaruv paneli</p>
+            <p className="text-xs text-slate-500">O&apos;qituvchi paneli</p>
           </div>
         </Link>
       </div>
@@ -83,23 +81,26 @@ function SidebarContent({
   );
 }
 
-export default function AdminLayout({
+export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session, status } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session) return;
-    const role = session.user.role;
-    if (role === "TEACHER") router.replace("/teacher/lessons");
-    else if (role === "STUDENT") router.replace("/student/lessons");
+    if (!session || session.user.role !== "TEACHER") {
+      router.replace("/");
+    }
   }, [session, status, router]);
+
+  if (status === "loading" || !session || session.user.role !== "TEACHER") {
+    return null;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
@@ -150,13 +151,13 @@ export default function AdminLayout({
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link href="/admin/lessons" className="flex items-center gap-2">
+          <Link href="/teacher/lessons" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-600">
               <Zap className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="font-bold text-white">Akme-pedagog</span>
           </Link>
-          <span className="text-xs text-slate-500">Admin</span>
+          <span className="text-xs text-slate-500">O&apos;qituvchi</span>
         </header>
 
         {/* Page content — scrollable */}

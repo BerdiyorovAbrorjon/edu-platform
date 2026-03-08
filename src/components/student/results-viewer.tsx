@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { cn, getScoreColor } from "@/lib/utils";
+import { cn, getScoreColor, fmtDate } from "@/lib/utils";
 
 interface QuestionBreakdown {
   question: string;
@@ -97,13 +97,7 @@ export function ResultsViewer({
     { name: "Yakuniy", score: Math.round(finalScore) },
   ];
 
-  const completionDate = completedAt
-    ? new Date(completedAt).toLocaleDateString("uz-UZ", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-    : "";
+  const completionDate = fmtDate(completedAt);
 
   // Situational QA total score
   const situationalTotalScore = situationalResults
@@ -128,14 +122,14 @@ export function ResultsViewer({
             &ldquo;{lesson.title}&rdquo; darsini tugatdingiz
           </p>
           <p className="text-sm text-green-700 font-medium">{encouragement}</p>
-          {completionDate && (
+          {completedAt && (
             <p className="text-xs text-muted-foreground">
               Tugatilgan sana: {completionDate}
             </p>
           )}
         </div>
       )}
-      {adminView && completionDate && (
+      {adminView && completedAt && (
         <p className="text-xs text-muted-foreground">
           Tugatilgan sana: {completionDate}
         </p>
@@ -448,20 +442,22 @@ export function ResultsViewer({
 
       <Separator />
 
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pb-8">
-        <Button asChild variant="outline" className="gap-2">
-          <Link href="/student/lessons">
-            <ArrowLeft className="h-4 w-4" />
-            Darslar ro&apos;yxatiga qaytish
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="gap-2">
-          <Link href={`/student/lessons/${lesson.id}`}>
-            Darsni qayta ko&apos;rish
-          </Link>
-        </Button>
-      </div>
+      {/* Actions — admin ko'rishda yashiriladi */}
+      {!adminView && (
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pb-8">
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/student/lessons">
+              <ArrowLeft className="h-4 w-4" />
+              Darslar ro&apos;yxatiga qaytish
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link href={`/student/lessons/${lesson.id}`}>
+              Darsni qayta ko&apos;rish
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

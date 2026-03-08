@@ -30,10 +30,10 @@ interface TestTakerProps {
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 const OPTION_COLORS = [
-  "border-blue-200 bg-blue-50 text-blue-800",
-  "border-green-200 bg-green-50 text-green-800",
-  "border-amber-200 bg-amber-50 text-amber-800",
-  "border-purple-200 bg-purple-50 text-purple-800",
+  "border-gray-200 bg-blue-50 text-gray-800",
+  "border-gray-200 bg-blue-50 text-gray-800",
+  "border-gray-200 bg-blue-50 text-gray-800",
+  "border-gray-200 bg-blue-50 text-gray-800",
 ];
 
 export function TestTaker({
@@ -172,8 +172,8 @@ export function TestTaker({
                 isCurrent
                   ? "w-6 bg-primary"
                   : isAnswered
-                  ? "w-2.5 bg-green-400"
-                  : "w-2.5 bg-muted"
+                    ? "w-2.5 bg-green-400"
+                    : "w-2.5 bg-muted"
               )}
             />
           );
@@ -238,10 +238,10 @@ export function TestTaker({
                   showFeedback && isCorrectOption
                     ? "bg-green-500 text-white border-green-500"
                     : showFeedback && isSelected && !isCorrectOption
-                    ? "bg-red-400 text-white border-red-400"
-                    : isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : OPTION_COLORS[optIndex]
+                      ? "bg-red-400 text-white border-red-400"
+                      : isSelected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : OPTION_COLORS[optIndex]
                 )}
               >
                 {OPTION_LABELS[optIndex]}

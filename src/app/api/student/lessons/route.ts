@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       where: {
         ...(search
           ? {
-              OR: [
-                { title: { contains: search, mode: "insensitive" } },
-                { description: { contains: search, mode: "insensitive" } },
-              ],
-            }
+            OR: [
+              { title: { contains: search, mode: "insensitive" } },
+              { description: { contains: search, mode: "insensitive" } },
+            ],
+          }
           : {}),
         // Only lessons with at least 1 test of each type, 1 lecture, and 1 situational QA
         tests: {
@@ -50,12 +50,12 @@ export async function GET(request: NextRequest) {
           select: { type: true, questions: true },
         },
         progress: {
-            where: { userId },
-            select: {
-              currentStep: true,
-              completedAt: true,
-            },
+          where: { userId },
+          select: {
+            currentStep: true,
+            completedAt: true,
           },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -63,12 +63,17 @@ export async function GET(request: NextRequest) {
     // Transform data for client
     const result = lessons.map((lesson) => {
       const progress = (lesson.progress as { currentStep: number; completedAt: Date | null }[])?.[0] ?? null;
+      const initialTest = lesson.tests.find((t) => t.type === "INITIAL");
+      const finalTest = lesson.tests.find((t) => t.type === "FINAL");
+
       return {
         id: lesson.id,
         title: lesson.title,
         description: lesson.description,
         lectureCount: lesson._count.lectures,
         qaCount: lesson._count.situationalQA,
+        initialQuestionCount: Array.isArray(initialTest?.questions) ? initialTest.questions.length : 0,
+        finalQuestionCount: Array.isArray(finalTest?.questions) ? finalTest.questions.length : 0,
         currentStep: progress?.currentStep ?? 0,
         completedAt: progress?.completedAt ?? null,
       };
