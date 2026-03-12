@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Search,
-  Eye,
+  Pencil,
+  Trash2,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -28,6 +29,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LessonStudents } from "@/components/admin/lesson-students";
 import { fmtDate } from "@/lib/utils";
 
@@ -53,10 +64,6 @@ interface Teacher {
 type StudentsDialogState =
   | { open: false }
   | { open: true; lessonId: string; lessonTitle: string };
-
-type ViewDialogState =
-  | { open: false }
-  | { open: true; lesson: Lesson };
 
 function isReady(lesson: Lesson): boolean {
   return (
@@ -129,7 +136,8 @@ export default function AdminLessonsPage() {
   const [teacherFilter, setTeacherFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [studentsDialog, setStudentsDialog] = useState<StudentsDialogState>({ open: false });
-  const [viewDialog, setViewDialog] = useState<ViewDialogState>({ open: false });
+  const [deleteLesson, setDeleteLesson] = useState<Lesson | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchLessons = useCallback(async () => {
     setLoading(true);
@@ -154,6 +162,24 @@ export default function AdminLessonsPage() {
     const timeout = setTimeout(fetchLessons, 300);
     return () => clearTimeout(timeout);
   }, [fetchLessons]);
+
+  const handleDelete = async () => {
+    if (!deleteLesson) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/lessons/${deleteLesson.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("O'chirishda xatolik");
+      toast.success("Dars o'chirildi");
+      setDeleteLesson(null);
+      fetchLessons();
+    } catch {
+      toast.error("Darsni o'chirishda xatolik yuz berdi");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredLessons = statusFilter
     ? lessons.filter((l) =>
@@ -234,7 +260,7 @@ export default function AdminLessonsPage() {
                 <TableHead className="font-semibold">Sana</TableHead>
                 <TableHead className="font-semibold text-center">Yakunlagan</TableHead>
                 <TableHead className="font-semibold text-center">Jarayonda</TableHead>
-                <TableHead className="font-semibold text-center">Ko&apos;rish</TableHead>
+                <TableHead className="font-semibold text-center">Amallar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -290,14 +316,26 @@ export default function AdminLessonsPage() {
                     </button>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setViewDialog({ open: true, lesson })}
-                      className="h-8 w-8 rounded-lg hover:bg-gray-100"
-                    >
-                      <Eye className="h-4 w-4 text-gray-500" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        asChild
+                        className="h-8 w-8 rounded-lg hover:bg-blue-50 hover:text-blue-600"
+                      >
+                        <Link href={`/admin/lessons/${lesson.id}/edit`}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600"
+                        onClick={() => setDeleteLesson(lesson)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -323,46 +361,31 @@ export default function AdminLessonsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* View Dialog */}
-      <Dialog
-        open={viewDialog.open}
-        onOpenChange={(open) => !open && setViewDialog({ open: false })}
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deleteLesson}
+        onOpenChange={(open) => !open && setDeleteLesson(null)}
       >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {viewDialog.open ? viewDialog.lesson.title : ""}
-            </DialogTitle>
-          </DialogHeader>
-          {viewDialog.open && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {viewDialog.lesson.description}
-              </p>
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-                <p className="text-sm font-semibold">Tarkib:</p>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-muted-foreground">Dastlabki test:</span>
-                  <span className="font-medium">{viewDialog.lesson.initialQuestionCount} ta</span>
-                  <span className="text-muted-foreground">Yakuniy test:</span>
-                  <span className="font-medium">{viewDialog.lesson.finalQuestionCount} ta</span>
-                  <span className="text-muted-foreground">Maruzalar:</span>
-                  <span className="font-medium">{viewDialog.lesson._count.lectures} ta</span>
-                  <span className="text-muted-foreground">S&amp;J:</span>
-                  <span className="font-medium">{viewDialog.lesson._count.situationalQA} ta</span>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button asChild variant="outline">
-                  <Link href={`/admin/lessons/${viewDialog.lesson.id}/edit`}>
-                    Tahrirlash
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Darsni o&apos;chirish</AlertDialogTitle>
+            <AlertDialogDescription>
+              &quot;{deleteLesson?.title}&quot; darsini o&apos;chirishni tasdiqlaysizmi? Bu amalni
+              bekor qilib bo&apos;lmaydi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Bekor qilish</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "O'chirilmoqda..." : "O'chirish"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

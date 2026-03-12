@@ -46,7 +46,11 @@ export default function StudentSituationalPage() {
       if (!qaRes.ok) throw new Error("Savollar topilmadi");
 
       const qaData = await qaRes.json();
-      setQuestions(Array.isArray(qaData) ? qaData : []);
+      setQuestions(
+        Array.isArray(qaData)
+          ? [...qaData].sort((a, b) => a.order - b.order)
+          : []
+      );
 
       if (progressRes.ok) {
         const progressData = await progressRes.json();

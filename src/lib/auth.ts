@@ -31,9 +31,13 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       // token.id ni normalize qil (eski sessiyalarda faqat token.sub bor)
       if (!token.id && token.sub) token.id = token.sub;
+
+      if (trigger === "update" && typeof session?.name === "string") {
+        token.name = session.name;
+      }
 
       const userId = (user?.id ?? token.id) as string | undefined;
       if (!userId) return token;
@@ -41,7 +45,7 @@ export const authOptions: NextAuthOptions = {
       try {
         const dbUser = await prisma.user.findUnique({
           where: { id: userId },
-          select: { id: true, email: true, role: true },
+          select: { id: true, name: true, email: true, image: true, role: true },
         });
 
         if (!dbUser) return token;
@@ -74,6 +78,9 @@ export const authOptions: NextAuthOptions = {
         }
 
         token.id = dbUser.id;
+        token.name = dbUser.name;
+        token.email = dbUser.email;
+        token.picture = dbUser.image;
         token.role = role;
       } catch (err) {
         console.error("JWT callback DB error:", err);
@@ -85,6 +92,9 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "TEACHER" | "STUDENT";
+        session.user.name = (token.name as string | null | undefined) ?? null;
+        session.user.email = (token.email as string | null | undefined) ?? null;
+        session.user.image = (token.picture as string | null | undefined) ?? null;
       }
       return session;
     },

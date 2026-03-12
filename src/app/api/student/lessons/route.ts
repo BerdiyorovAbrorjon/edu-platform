@@ -40,6 +40,12 @@ export async function GET(request: NextRequest) {
         },
       },
       include: {
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             lectures: true,
@@ -70,6 +76,10 @@ export async function GET(request: NextRequest) {
         id: lesson.id,
         title: lesson.title,
         description: lesson.description,
+        createdBy: {
+          name: lesson.createdBy.name,
+          email: lesson.createdBy.email,
+        },
         lectureCount: lesson._count.lectures,
         qaCount: lesson._count.situationalQA,
         initialQuestionCount: Array.isArray(initialTest?.questions) ? initialTest.questions.length : 0,

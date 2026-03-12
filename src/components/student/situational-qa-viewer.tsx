@@ -38,9 +38,25 @@ interface SituationalQAViewerProps {
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 function scoreStyle(score: number) {
-  if (score >= 4) return { btn: "bg-green-50 border-green-400", badge: "bg-green-100 text-green-700 border-green-200" };
-  if (score >= 2) return { btn: "bg-amber-50 border-amber-400", badge: "bg-amber-100 text-amber-700 border-amber-200" };
-  return { btn: "bg-red-50 border-red-400", badge: "bg-red-100 text-red-700 border-red-200" };
+  if (score >= 4) {
+    return {
+      btn: "border-green-500 bg-green-50 ring-1 ring-green-300",
+      badge: "bg-green-100 text-green-700 border-green-200",
+      icon: "bg-green-500 text-white border-green-500",
+    };
+  }
+  if (score >= 2) {
+    return {
+      btn: "border-amber-400 bg-amber-50 ring-1 ring-amber-200",
+      badge: "bg-amber-100 text-amber-700 border-amber-200",
+      icon: "bg-amber-100 text-amber-700 border-amber-200",
+    };
+  }
+  return {
+    btn: "border-red-400 bg-red-50 ring-1 ring-red-200",
+    badge: "bg-red-100 text-red-700 border-red-200",
+    icon: "bg-red-400 text-white border-red-400",
+  };
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -68,8 +84,7 @@ export function SituationalQAViewer({
   // Har savol uchun bir marta aralashtirilgan tartib (mount da)
   const shuffledOrders = useMemo(
     () => questions.map((q) => shuffle(q.answers.map((_, i) => i))),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [questions]
   );
 
   const total = questions.length;
@@ -251,10 +266,10 @@ export function SituationalQAViewer({
                 disabled={isConfirmed}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
-                  !isConfirmed && !isPending && "border-gray-200 bg-blue-50 hover:bg-gray-100 hover:border-gray-300",
+                  !isConfirmed && !isPending && "hover:bg-accent hover:border-accent",
                   isPending && "border-primary bg-primary/5 ring-1 ring-primary",
                   isSelectedConfirmed && sStyle?.btn,
-                  isDisabled && "border-gray-100 bg-blue-50 opacity-40",
+                  isDisabled && "opacity-50",
                   !isConfirmed && "cursor-pointer",
                   isConfirmed && !isSelectedConfirmed && "cursor-default"
                 )}
@@ -265,8 +280,8 @@ export function SituationalQAViewer({
                     isPending
                       ? "border-primary bg-primary text-primary-foreground"
                       : isSelectedConfirmed
-                        ? sStyle?.badge
-                        : "border-gray-300 bg-gray-100 text-gray-500"
+                        ? sStyle?.icon
+                        : "border-gray-200 bg-blue-50 text-gray-800"
                   )}
                 >
                   {letter}

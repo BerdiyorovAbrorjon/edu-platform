@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,11 @@ interface Question {
   correctAnswer: number;
 }
 
+interface ShuffledOption {
+  text: string;
+  originalIndex: number;
+}
+
 interface TestTakerProps {
   questions: Question[];
   testId: string;
@@ -36,6 +41,15 @@ const OPTION_COLORS = [
   "border-gray-200 bg-blue-50 text-gray-800",
 ];
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function TestTaker({
   questions,
   testId,
@@ -49,8 +63,22 @@ export function TestTaker({
   const [allAnswers, setAllAnswers] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const totalQuestions = questions.length;
-  const currentQuestion = questions[currentIndex];
+  const shuffledQuestions = useMemo(
+    () =>
+      questions.map((question) => ({
+        ...question,
+        shuffledOptions: shuffle(
+          question.options.map((text, index) => ({
+            text,
+            originalIndex: index,
+          }))
+        ),
+      })),
+    [questions]
+  );
+
+  const totalQuestions = shuffledQuestions.length;
+  const currentQuestion = shuffledQuestions[currentIndex];
   const progressPercent = (allAnswers.length / totalQuestions) * 100;
   const isLast = currentIndex === totalQuestions - 1;
 
@@ -138,6 +166,10 @@ export function TestTaker({
   };
 
   const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+  const correctOptionDisplayIndex = currentQuestion.shuffledOptions.findIndex(
+    (option: ShuffledOption) => option.originalIndex === currentQuestion.correctAnswer
+  );
+  const correctOption = currentQuestion.shuffledOptions[correctOptionDisplayIndex];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -161,7 +193,7 @@ export function TestTaker({
 
       {/* Progress dots */}
       <div className="flex items-center gap-1.5">
-        {questions.map((_, idx) => {
+        {shuffledQuestions.map((_, idx) => {
           const isAnswered = idx < allAnswers.length;
           const isCurrent = idx === currentIndex;
           return (
@@ -199,9 +231,9 @@ export function TestTaker({
 
       {/* Options */}
       <div className="space-y-2.5">
-        {currentQuestion.options.map((opt, optIndex) => {
-          const isSelected = selectedAnswer === optIndex;
-          const isCorrectOption = optIndex === currentQuestion.correctAnswer;
+        {currentQuestion.shuffledOptions.map((option, optIndex) => {
+          const isSelected = selectedAnswer === option.originalIndex;
+          const isCorrectOption = option.originalIndex === currentQuestion.correctAnswer;
 
           let optionStyle = "";
           if (showFeedback) {
@@ -221,7 +253,7 @@ export function TestTaker({
               key={optIndex}
               type="button"
               onClick={() => {
-                if (!showFeedback) setSelectedAnswer(optIndex);
+                if (!showFeedback) setSelectedAnswer(option.originalIndex);
               }}
               disabled={showFeedback}
               className={cn(
@@ -242,11 +274,11 @@ export function TestTaker({
                       : isSelected
                         ? "border-primary bg-primary text-primary-foreground"
                         : OPTION_COLORS[optIndex]
-                )}
+                  )}
               >
                 {OPTION_LABELS[optIndex]}
               </span>
-              <span className="text-sm leading-snug flex-1">{opt}</span>
+              <span className="text-sm leading-snug flex-1">{option.text}</span>
               {showFeedback && isCorrectOption && (
                 <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
               )}
@@ -271,7 +303,7 @@ export function TestTaker({
           </p>
           {!isCorrect && (
             <p className="text-sm text-red-700 mt-1">
-              To&apos;g&apos;ri javob: {OPTION_LABELS[currentQuestion.correctAnswer]}. {currentQuestion.options[currentQuestion.correctAnswer]}
+              To&apos;g&apos;ri javob: {OPTION_LABELS[correctOptionDisplayIndex]}. {correctOption?.text}
             </p>
           )}
         </div>

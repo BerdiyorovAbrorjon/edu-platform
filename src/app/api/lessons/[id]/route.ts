@@ -42,7 +42,10 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "TEACHER") {
+    if (
+      !session ||
+      (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -50,7 +53,10 @@ export async function PUT(
       where: { id: params.id },
       select: { createdById: true },
     });
-    if (!lesson || lesson.createdById !== session.user.id) {
+    if (
+      !lesson ||
+      (session.user.role === "TEACHER" && lesson.createdById !== session.user.id)
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -88,7 +94,10 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "TEACHER") {
+    if (
+      !session ||
+      (session.user.role !== "TEACHER" && session.user.role !== "ADMIN")
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -96,7 +105,10 @@ export async function DELETE(
       where: { id: params.id },
       select: { createdById: true },
     });
-    if (!lesson || lesson.createdById !== session.user.id) {
+    if (
+      !lesson ||
+      (session.user.role === "TEACHER" && lesson.createdById !== session.user.id)
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
