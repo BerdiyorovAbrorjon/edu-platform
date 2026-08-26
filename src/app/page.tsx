@@ -307,7 +307,7 @@ export default async function HomePage() {
             <span className="font-bold text-white">Akme-pedagog</span>
           </Link>
           <p className="text-sm text-slate-600">
-            © 2024 Akme-pedagog. Barcha huquqlar himoyalangan.
+            © 2026 Akme-pedagog. Barcha huquqlar himoyalangan.
           </p>
         </div>
       </footer>

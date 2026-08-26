@@ -63,7 +63,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <div className="relative z-10 p-8 text-center text-xs text-slate-700">
-          © 2024 Akme-pedagog. Barcha huquqlar himoyalangan.
+          © 2026 Akme-pedagog. Barcha huquqlar himoyalangan.
         </div>
       </div>
 
