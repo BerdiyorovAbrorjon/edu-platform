@@ -18,7 +18,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           envs: ENV_FILE
           script: |
-            cd /root/edu-platform
+            cd /opt/edu-platform
             docker compose up -d
             # cd /root/edu-platform
             # git pull origin main
