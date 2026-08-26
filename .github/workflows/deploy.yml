@@ -14,11 +14,11 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         with:
           host: ${{ secrets.SERVER_HOST }}
-          username: bahrom
+          username: root
           password: ${{ secrets.SERVER_PASSWORD }}
           envs: ENV_FILE
           script: |
-            cd /opt/edu-platform
+            cd /root/edu-platform
             docker compose up -d
             # cd /root/edu-platform
             # git pull origin main
