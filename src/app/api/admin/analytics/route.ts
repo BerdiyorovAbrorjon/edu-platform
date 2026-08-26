@@ -6,9 +6,11 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "TEACHER")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const isTeacher = session.user.role === "TEACHER";
 
     const { searchParams } = request.nextUrl;
     const dateRange = searchParams.get("dateRange") || "30d";
@@ -19,12 +21,27 @@ export async function GET(request: NextRequest) {
     const days = dateRange === "7d" ? 7 : dateRange === "90d" ? 90 : 30;
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
+    // For TEACHER: only their lessons
+    const teacherLessonFilter = isTeacher ? { createdById: session.user.id } : {};
+    const teacherLessonIds = isTeacher
+      ? (await prisma.lesson.findMany({ where: { createdById: session.user.id }, select: { id: true } })).map((l) => l.id)
+      : null;
+
+    const progressLessonFilter =
+      lessonId
+        ? { lessonId }
+        : teacherLessonIds
+          ? { lessonId: { in: teacherLessonIds } }
+          : {};
+
+
     // --- Overview stats ---
-    const [totalStudents, totalLessons, progressData] = await Promise.all([
+    const [totalTeachers, totalStudents, totalLessons, progressData] = await Promise.all([
+      prisma.user.count({ where: { role: "TEACHER" } }),
       prisma.user.count({ where: { role: "STUDENT" } }),
-      prisma.lesson.count(),
+      prisma.lesson.count({ where: teacherLessonFilter }),
       prisma.studentProgress.findMany({
-        where: lessonId ? { lessonId } : {},
+        where: progressLessonFilter,
         select: { completedAt: true },
       }),
     ]);
@@ -37,6 +54,9 @@ export async function GET(request: NextRequest) {
 
     // --- Average improvement (final - initial) ---
     const testResults = await prisma.testResult.findMany({
+      where: teacherLessonIds
+        ? { test: { lessonId: { in: teacherLessonIds } } }
+        : {},
       include: {
         test: { select: { lessonId: true, type: true } },
       },
@@ -56,15 +76,15 @@ export async function GET(request: NextRequest) {
     const avgImprovement =
       improvements.length > 0
         ? Math.round(
-            (improvements.reduce((a, b) => a + b, 0) / improvements.length) * 10
-          ) / 10
+          (improvements.reduce((a, b) => a + b, 0) / improvements.length) * 10
+        ) / 10
         : 0;
 
     // --- Completion chart (daily completions over date range) ---
     const completionsInRange = await prisma.studentProgress.findMany({
       where: {
         completedAt: { gte: cutoff },
-        ...(lessonId ? { lessonId } : {}),
+        ...progressLessonFilter,
       },
       select: { completedAt: true },
       orderBy: { completedAt: "asc" },
@@ -88,6 +108,7 @@ export async function GET(request: NextRequest) {
 
     // --- Lesson chart (bar: completions per lesson) ---
     const lessons = await prisma.lesson.findMany({
+      where: teacherLessonFilter,
       select: {
         id: true,
         title: true,
@@ -110,7 +131,7 @@ export async function GET(request: NextRequest) {
         completedAt: { gte: cutoff },
         test: {
           type: "FINAL",
-          ...(lessonId ? { lessonId } : {}),
+          ...(lessonId ? { lessonId } : teacherLessonIds ? { lessonId: { in: teacherLessonIds } } : {}),
         },
       },
       select: { score: true, completedAt: true },
@@ -181,6 +202,7 @@ export async function GET(request: NextRequest) {
     const totalStudentsCount = await prisma.user.count({ where: { role: "STUDENT" } });
 
     return NextResponse.json({
+      totalTeachers,
       totalStudents,
       totalLessons,
       completionRate,

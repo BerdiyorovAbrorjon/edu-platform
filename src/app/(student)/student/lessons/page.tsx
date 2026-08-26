@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   Play,
+  User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,10 @@ interface LessonWithProgress {
   id: string;
   title: string;
   description: string;
+  createdBy: {
+    name: string | null;
+    email: string;
+  };
   lectureCount: number;
   qaCount: number;
   currentStep: number;
@@ -221,9 +226,9 @@ export default function StudentLessonsPage() {
                 )}
               >
                 {/* Colored top accent line */}
-                <div
+                {/* <div
                   className={cn("h-1 w-full shrink-0", cfg.accentLine)}
-                />
+                /> */}
 
                 <div className="flex flex-1 flex-col p-6">
                   {/* Title + badge */}
@@ -234,10 +239,17 @@ export default function StudentLessonsPage() {
                     {cfg.badge}
                   </div>
 
-                  {/* Description */}
+                  {/* Description
                   <p className="mb-4 line-clamp-2 flex-1 text-sm leading-relaxed text-gray-500">
                     {lesson.description}
-                  </p>
+                  </p> */}
+
+                  <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="truncate">
+                      O&apos;qituvchi: {lesson.createdBy.name ?? lesson.createdBy.email}
+                    </span>
+                  </div>
 
                   {/* Meta */}
                   <div className="mb-4 flex items-center gap-3 text-xs text-gray-400">
@@ -252,7 +264,7 @@ export default function StudentLessonsPage() {
                   {/* Progress */}
                   <div className="mb-5 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-400">Progress</span>
+                      <span className="text-gray-400">Jarayon</span>
                       <span className="font-semibold text-gray-700">
                         {percent}%
                       </span>

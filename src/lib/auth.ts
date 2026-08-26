@@ -24,33 +24,6 @@ export const authOptions: NextAuthOptions = {
       allowDangerousEmailAccountLinking: true,
     }),
   ],
-  events: {
-    async createUser({ user }) {
-      const adminEmails = getAdminEmails();
-      const userEmail = user.email ?? "";
-
-      console.log("🆕 New user created:", userEmail);
-
-      try {
-        if (adminEmails.length > 0) {
-          const isAdmin = adminEmails.includes(userEmail);
-          console.log(isAdmin ? "✅ Email in ADMIN_EMAILS — setting ADMIN" : "ℹ️ Not in admin list — keeping STUDENT");
-          if (isAdmin) {
-            await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-          }
-        } else {
-          const userCount = await prisma.user.count();
-          console.log("📊 Total users:", userCount);
-          if (userCount === 1) {
-            console.log("✅ First user — setting ADMIN");
-            await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error updating user role:", error);
-      }
-    },
-  },
   callbacks: {
     async redirect({ url, baseUrl }) {
       console.log("[auth] redirect callback:", { url, baseUrl });
@@ -58,23 +31,70 @@ export const authOptions: NextAuthOptions = {
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, user, trigger }) {
-      if (user || trigger === "signIn") {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: (user?.id ?? token.id) as string },
-          select: { id: true, role: true },
-        });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-        }
+    async jwt({ token, user, trigger, session }) {
+      // token.id ni normalize qil (eski sessiyalarda faqat token.sub bor)
+      if (!token.id && token.sub) token.id = token.sub;
+
+      if (trigger === "update" && typeof session?.name === "string") {
+        token.name = session.name;
       }
+
+      const userId = (user?.id ?? token.id) as string | undefined;
+      if (!userId) return token;
+
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, name: true, email: true, image: true, role: true },
+        });
+
+        if (!dbUser) return token;
+
+        let role = dbUser.role;
+
+        // Yangi foydalanuvchi: STUDENT ni admin/teacher ga upgrade qilish
+        if (user && role === "STUDENT") {
+          const email = dbUser.email ?? "";
+          const adminEmails = getAdminEmails();
+
+          if (adminEmails.length > 0 && adminEmails.includes(email)) {
+            await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+            role = "ADMIN";
+          } else if (adminEmails.length === 0) {
+            const userCount = await prisma.user.count();
+            if (userCount === 1) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+              role = "ADMIN";
+            }
+          }
+
+          if (role === "STUDENT") {
+            const teacherEntry = await prisma.teacherEmail.findUnique({ where: { email } });
+            if (teacherEntry) {
+              await prisma.user.update({ where: { id: dbUser.id }, data: { role: "TEACHER" } });
+              role = "TEACHER";
+            }
+          }
+        }
+
+        token.id = dbUser.id;
+        token.name = dbUser.name;
+        token.email = dbUser.email;
+        token.picture = dbUser.image;
+        token.role = role;
+      } catch (err) {
+        console.error("JWT callback DB error:", err);
+      }
+
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as "ADMIN" | "STUDENT";
+        session.user.role = token.role as "ADMIN" | "TEACHER" | "STUDENT";
+        session.user.name = (token.name as string | null | undefined) ?? null;
+        session.user.email = (token.email as string | null | undefined) ?? null;
+        session.user.image = (token.picture as string | null | undefined) ?? null;
       }
       return session;
     },

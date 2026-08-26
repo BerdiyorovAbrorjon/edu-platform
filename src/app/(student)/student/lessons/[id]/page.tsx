@@ -17,6 +17,7 @@ import {
   Trophy,
   ChevronRight,
   Play,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,11 @@ interface LessonOverview {
   id: string;
   title: string;
   description: string;
+  createdBy: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
   tests: { id: string; type: string; questions: unknown[] }[];
   lectures: { id: string; title: string; order: number }[];
   situationalQA: { id: string; question: string; order: number }[];
@@ -235,6 +241,10 @@ export default function LessonOverviewPage() {
               {lesson.title}
             </h1>
             <p className="mt-2 text-gray-500">{lesson.description}</p>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm text-gray-600">
+              <User className="h-4 w-4 text-gray-400" />
+              <span>O&apos;qituvchi: {lesson.createdBy.name ?? lesson.createdBy.email}</span>
+            </div>
           </div>
           {isCompleted && (
             <Badge className="shrink-0 gap-1.5 border-green-200 bg-green-50 px-3 py-1.5 text-green-700">
@@ -256,7 +266,7 @@ export default function LessonOverviewPage() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-blue-100">Umumiy progress</p>
+              <p className="text-sm text-blue-100">Umumiy holat</p>
               <p className="mt-1 text-2xl font-black">
                 {currentStep === 0 ? 0 : Math.min((currentStep - 1) * 25, 75)}%
               </p>

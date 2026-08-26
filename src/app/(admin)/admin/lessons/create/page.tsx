@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -20,18 +21,25 @@ import {
 import { Label } from "@/components/ui/label";
 
 const lessonSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title is too long"),
+  title: z.string().min(1, "Sarlavha kiritish shart").max(200, "Sarlavha juda uzun"),
   description: z
     .string()
-    .min(1, "Description is required")
-    .max(2000, "Description is too long"),
+    .min(1, "Tavsif kiritish shart")
+    .max(2000, "Tavsif juda uzun"),
 });
 
 type LessonFormData = z.infer<typeof lessonSchema>;
 
 export default function CreateLessonPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (session && session.user.role !== "TEACHER") {
+      router.replace("/admin/lessons");
+    }
+  }, [session, router]);
 
   const {
     register,
@@ -56,15 +64,15 @@ export default function CreateLessonPage() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || "Failed to create lesson");
+        throw new Error(error.error || "Dars yaratishda xatolik");
       }
 
       const lesson = await res.json();
-      toast.success("Lesson created successfully");
+      toast.success("Dars muvaffaqiyatli yaratildi");
       router.push(`/admin/lessons/${lesson.id}/edit`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create lesson"
+        error instanceof Error ? error.message : "Dars yaratishda xatolik"
       );
     } finally {
       setSubmitting(false);
@@ -80,28 +88,27 @@ export default function CreateLessonPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Lesson</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Dars yaratish</h1>
           <p className="text-muted-foreground">
-            Add a new lesson to your platform
+            Platformaga yangi dars qo&apos;shish
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Lesson Details</CardTitle>
+          <CardTitle>Dars ma&apos;lumotlari</CardTitle>
           <CardDescription>
-            Enter the basic information for your lesson. You can add tests,
-            lectures, and Q&A after creating it.
+            Dars uchun asosiy ma&apos;lumotlarni kiriting. Yaratgandan so&apos;ng test, maruza va S&amp;J qo&apos;shishingiz mumkin.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Sarlavha</Label>
               <Input
                 id="title"
-                placeholder="e.g., Introduction to Web Development"
+                placeholder="Masalan: Web dasturlashga kirish"
                 {...register("title")}
               />
               {errors.title && (
@@ -112,10 +119,10 @@ export default function CreateLessonPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Tavsif</Label>
               <Textarea
                 id="description"
-                placeholder="Describe what students will learn in this lesson..."
+                placeholder="Talabalar bu darsda nima o'rganishini tasvirlab bering..."
                 rows={5}
                 {...register("description")}
               />
@@ -129,10 +136,10 @@ export default function CreateLessonPage() {
             <div className="flex items-center gap-3">
               <Button type="submit" disabled={submitting}>
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create Lesson
+                Dars yaratish
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/admin/lessons">Cancel</Link>
+                <Link href="/admin/lessons">Bekor qilish</Link>
               </Button>
             </div>
           </form>

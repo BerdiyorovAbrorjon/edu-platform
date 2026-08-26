@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fmtDate } from "@/lib/utils";
 import {
   ResponsiveContainer,
   LineChart,
@@ -42,6 +43,7 @@ import {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface AnalyticsData {
+  totalTeachers: number;
   totalStudents: number;
   totalLessons: number;
   completionRate: number;
@@ -159,34 +161,36 @@ export default function AnalyticsPage() {
 
   const sortedStudents = data
     ? [...data.studentsList].sort((a, b) => {
-        const mul = sortDir === "asc" ? 1 : -1;
-        if (sortField === "name") {
-          return mul * (a.name ?? "").localeCompare(b.name ?? "");
-        }
-        if (sortField === "completedCount") {
-          return mul * (a.completedCount - b.completedCount);
-        }
-        if (sortField === "avgScore") {
-          return mul * ((a.avgScore ?? -1) - (b.avgScore ?? -1));
-        }
-        // latestActivity
-        const ta = a.latestActivity ? new Date(a.latestActivity).getTime() : 0;
-        const tb = b.latestActivity ? new Date(b.latestActivity).getTime() : 0;
-        return mul * (ta - tb);
-      })
+      const mul = sortDir === "asc" ? 1 : -1;
+      if (sortField === "name") {
+        return mul * (a.name ?? "").localeCompare(b.name ?? "");
+      }
+      if (sortField === "completedCount") {
+        return mul * (a.completedCount - b.completedCount);
+      }
+      if (sortField === "avgScore") {
+        return mul * ((a.avgScore ?? -1) - (b.avgScore ?? -1));
+      }
+      // latestActivity
+      const ta = a.latestActivity ? new Date(a.latestActivity).getTime() : 0;
+      const tb = b.latestActivity ? new Date(b.latestActivity).getTime() : 0;
+      return mul * (ta - tb);
+    })
     : [];
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("uz-UZ", { month: "short", day: "numeric" });
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}`;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Tahlil</h1>
           <p className="text-muted-foreground text-sm">
-            Platform performance and student activity
+            Platforma ko&apos;rsatkichlari va talabalar faoliyati
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -196,13 +200,12 @@ export default function AnalyticsPage() {
               <button
                 key={r}
                 onClick={() => { setDateRange(r); setPage(1); }}
-                className={`px-3 py-1.5 transition-colors ${
-                  dateRange === r
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
+                className={`px-3 py-1.5 transition-colors ${dateRange === r
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-muted"
+                  }`}
               >
-                {r === "7d" ? "7 days" : r === "30d" ? "30 days" : "90 days"}
+                {r === "7d" ? "7 kun" : r === "30d" ? "30 kun" : "90 kun"}
               </button>
             ))}
           </div>
@@ -226,46 +229,59 @@ export default function AnalyticsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Students
+                  Jami talabalar
                 </CardTitle>
                 <Users className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{data?.totalStudents ?? 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Registered learners</p>
+                <p className="text-xs text-muted-foreground mt-1">Ro&apos;yxatdan o&apos;tgan talabalar</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Lessons
+                  Jami o&apos;qituvchilar
+                </CardTitle>
+                <Users className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{data?.totalTeachers ?? 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">Ro&apos;yxatdan o&apos;tgan o&apos;qituvchilar</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Jami darslar
                 </CardTitle>
                 <BookOpen className="h-4 w-4 text-amber-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{data?.totalLessons ?? 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Published lessons</p>
+                <p className="text-xs text-muted-foreground mt-1">Chop etilgan darslar</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Completion Rate
+                  Tugatish darajasi
                 </CardTitle>
                 <BarChart3 className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{data?.completionRate ?? 0}%</div>
-                <p className="text-xs text-muted-foreground mt-1">Of all enrollments</p>
+                <p className="text-xs text-muted-foreground mt-1">Barcha ro&apos;yxatdan o&apos;tishlardan</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Avg Improvement
+                  O&apos;rtacha o&apos;sish
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-purple-500" />
               </CardHeader>
@@ -274,7 +290,7 @@ export default function AnalyticsPage() {
                   {data && data.avgImprovement >= 0 ? "+" : ""}
                   {data?.avgImprovement ?? 0}%
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Final vs initial score</p>
+                <p className="text-xs text-muted-foreground mt-1">Yakuniy va boshlang&apos;ich ball</p>
               </CardContent>
             </Card>
           </>
@@ -285,15 +301,15 @@ export default function AnalyticsPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {loading ? (
           <>
-            <ChartSkeleton title="Completions Over Time" />
-            <ChartSkeleton title="Lessons by Completions" />
+            <ChartSkeleton title="Vaqt bo'yicha yakunlashlar" />
+            <ChartSkeleton title="Eng ko'p yakunlangan darslar" />
           </>
         ) : (
           <>
             {/* Line chart: completions over time */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Completions Over Time</CardTitle>
+                <CardTitle className="text-base">Vaqt bo&apos;yicha yakunlashlar</CardTitle>
               </CardHeader>
               <CardContent>
                 {data && data.completionChart.length > 0 ? (
@@ -309,7 +325,7 @@ export default function AnalyticsPage() {
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip
                         labelFormatter={(v) => formatDate(String(v))}
-                        formatter={(v) => [Number(v ?? 0), "Completions"]}
+                        formatter={(v) => [Number(v ?? 0), "Yakunlashlar"]}
                       />
                       <Line
                         type="monotone"
@@ -323,7 +339,7 @@ export default function AnalyticsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                    No completion data in this period
+                    Bu davrda yakunlash ma&apos;lumotlari yo&apos;q
                   </div>
                 )}
               </CardContent>
@@ -332,7 +348,7 @@ export default function AnalyticsPage() {
             {/* Bar chart: lessons by completion count */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Top Lessons by Completions</CardTitle>
+                <CardTitle className="text-base">Eng ko&apos;p yakunlangan darslar</CardTitle>
               </CardHeader>
               <CardContent>
                 {data && data.lessonChart.length > 0 ? (
@@ -349,13 +365,13 @@ export default function AnalyticsPage() {
                           v.length > 14 ? v.slice(0, 14) + "…" : v
                         }
                       />
-                      <Tooltip formatter={(v) => [Number(v ?? 0), "Completions"]} />
+                      <Tooltip formatter={(v) => [Number(v ?? 0), "Yakunlashlar"]} />
                       <Bar dataKey="completions" fill="#22c55e" radius={[0, 3, 3, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                    No lesson data yet
+                    Hali dars ma&apos;lumotlari yo&apos;q
                   </div>
                 )}
               </CardContent>
@@ -366,11 +382,11 @@ export default function AnalyticsPage() {
 
       {/* Charts Row 2: Score Trend */}
       {loading ? (
-        <ChartSkeleton title="Average Score Trend" />
+        <ChartSkeleton title="O'rtacha ball dinamikasi" />
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Average Final Score Trend</CardTitle>
+            <CardTitle className="text-base">O&apos;rtacha yakuniy ball dinamikasi</CardTitle>
           </CardHeader>
           <CardContent>
             {data && data.scoreChart.length > 0 ? (
@@ -392,7 +408,7 @@ export default function AnalyticsPage() {
                   <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} unit="%" />
                   <Tooltip
                     labelFormatter={(v) => formatDate(String(v))}
-                    formatter={(v) => [`${Number(v ?? 0)}%`, "Avg Score"]}
+                    formatter={(v) => [`${Number(v ?? 0)}%`, "O'rtacha ball"]}
                   />
                   <Area
                     type="monotone"
@@ -405,7 +421,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-                No score data in this period
+                Bu davrda ball ma&apos;lumotlari yo&apos;q
               </div>
             )}
           </CardContent>
@@ -415,7 +431,7 @@ export default function AnalyticsPage() {
       {/* Student Performance Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Student Performance</CardTitle>
+          <CardTitle className="text-base">Talabalar ko&apos;rsatkichi</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
@@ -432,7 +448,7 @@ export default function AnalyticsPage() {
           ) : data && data.studentsList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Users className="h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">No students yet</p>
+              <p className="text-sm">Hali talabalar yo&apos;q</p>
             </div>
           ) : (
             <>
@@ -444,7 +460,7 @@ export default function AnalyticsPage() {
                         className="flex items-center text-xs font-medium"
                         onClick={() => toggleSort("name")}
                       >
-                        Student <SortIcon field="name" />
+                        Talaba <SortIcon field="name" />
                       </button>
                     </TableHead>
                     <TableHead>
@@ -452,7 +468,7 @@ export default function AnalyticsPage() {
                         className="flex items-center text-xs font-medium"
                         onClick={() => toggleSort("completedCount")}
                       >
-                        Completed <SortIcon field="completedCount" />
+                        Tugatilgan <SortIcon field="completedCount" />
                       </button>
                     </TableHead>
                     <TableHead>
@@ -460,7 +476,7 @@ export default function AnalyticsPage() {
                         className="flex items-center text-xs font-medium"
                         onClick={() => toggleSort("avgScore")}
                       >
-                        Avg Score <SortIcon field="avgScore" />
+                        O&apos;rtacha ball <SortIcon field="avgScore" />
                       </button>
                     </TableHead>
                     <TableHead>
@@ -468,7 +484,7 @@ export default function AnalyticsPage() {
                         className="flex items-center text-xs font-medium"
                         onClick={() => toggleSort("latestActivity")}
                       >
-                        Last Activity <SortIcon field="latestActivity" />
+                        So&apos;nggi faoliyat <SortIcon field="latestActivity" />
                       </button>
                     </TableHead>
                   </TableRow>
@@ -488,7 +504,7 @@ export default function AnalyticsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
-                          {student.completedCount} lessons
+                          {student.completedCount} dars
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -498,8 +514,8 @@ export default function AnalyticsPage() {
                               student.avgScore >= 80
                                 ? "text-green-600 font-medium"
                                 : student.avgScore >= 60
-                                ? "text-amber-600 font-medium"
-                                : "text-red-600 font-medium"
+                                  ? "text-amber-600 font-medium"
+                                  : "text-red-600 font-medium"
                             }
                           >
                             {student.avgScore}%
@@ -509,9 +525,7 @@ export default function AnalyticsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {student.latestActivity
-                          ? new Date(student.latestActivity).toLocaleDateString()
-                          : "—"}
+                        {fmtDate(student.latestActivity)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -522,12 +536,12 @@ export default function AnalyticsPage() {
               {data && data.pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
                   <p className="text-muted-foreground">
-                    Showing {(data.pagination.page - 1) * data.pagination.pageSize + 1}–
+                    {(data.pagination.page - 1) * data.pagination.pageSize + 1}–
                     {Math.min(
                       data.pagination.page * data.pagination.pageSize,
                       data.pagination.total
                     )}{" "}
-                    of {data.pagination.total}
+                    ko&apos;rsatilmoqda, jami: {data.pagination.total}
                   </p>
                   <div className="flex gap-1">
                     <Button

@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Zap, BookOpen, LayoutDashboard } from "lucide-react";
 import { UserNav } from "@/components/auth/user-nav";
 import { cn } from "@/lib/utils";
@@ -17,6 +19,16 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) return;
+    const role = session.user.role;
+    if (role === "ADMIN") router.replace("/admin/analytics");
+    else if (role === "TEACHER") router.replace("/teacher/lessons");
+  }, [session, status, router]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">

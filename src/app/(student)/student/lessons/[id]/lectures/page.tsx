@@ -14,6 +14,8 @@ interface Lecture {
   description: string;
   videoUrl: string | null;
   filePath: string | null;
+  fileId: string | null;
+  fileOriginalName: string | null;
   order: number;
 }
 
@@ -42,7 +44,11 @@ export default function StudentLecturesPage() {
       if (!lecturesRes.ok) throw new Error("Maruzalar topilmadi");
 
       const lecturesData = await lecturesRes.json();
-      setLectures(Array.isArray(lecturesData) ? lecturesData : []);
+      setLectures(
+        Array.isArray(lecturesData)
+          ? [...lecturesData].sort((a, b) => a.order - b.order)
+          : []
+      );
 
       if (progressRes.ok) {
         const progressData = await progressRes.json();

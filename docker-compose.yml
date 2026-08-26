@@ -117,13 +117,22 @@ services:
   minio:
     image: minio/minio
     container_name: edu-platform-minio
+    restart: unless-stopped
+    ports:
+      # MinIO web console for admin management
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      # S3 API port — files stream through app server, not exposed publicly
+      # Uncomment below only if direct MinIO access is needed:
+      # - "${MINIO_PORT:-9000}:9000"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - minio_data:/data
     networks:

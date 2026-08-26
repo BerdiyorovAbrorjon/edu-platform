@@ -38,15 +38,15 @@ export function DeleteLessonDialog({
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || "Failed to delete lesson");
+        throw new Error(error.error || "Darsni o'chirishda xatolik");
       }
 
-      toast.success("Lesson deleted successfully");
+      toast.success("Dars muvaffaqiyatli o'chirildi");
       onClose();
       onDeleted();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete lesson"
+        error instanceof Error ? error.message : "Darsni o'chirishda xatolik"
       );
     } finally {
       setDeleting(false);
@@ -57,25 +57,25 @@ export function DeleteLessonDialog({
     <AlertDialog open={!!lesson} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Ishonchingiz komilmi?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the lesson{" "}
+            Bu dars{" "}
             <span className="font-semibold text-foreground">
               &quot;{lesson?.title}&quot;
             </span>{" "}
-            and all its associated data including tests, lectures, and Q&A.
-            This action cannot be undone.
+            va unga tegishli barcha ma&apos;lumotlar (testlar, maruzalar va S&amp;J) butunlay o&apos;chiriladi.
+            Bu amalni qaytarib bo&apos;lmaydi.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>Bekor qilish</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={deleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Delete
+            O&apos;chirish
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

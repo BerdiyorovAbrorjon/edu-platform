@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { uploadFile, getFileUrl } from "@/lib/minio";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { uploadFile } from "@/lib/minio";
+import { prisma } from "@/lib/prisma";
 import path from "path";
 
 const ALLOWED_TYPES: Record<string, string> = {
@@ -21,9 +24,15 @@ const ALLOWED_TYPES: Record<string, string> = {
 const MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const lessonId = formData.get("lessonId") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -50,12 +59,23 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await uploadFile(buffer, filename, file.type);
 
-    const url = await getFileUrl(filename);
+    const fileRecord = await prisma.file.create({
+      data: {
+        filename,
+        originalName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        path: filename,
+        lessonId: lessonId || null,
+        uploadedBy: session.user.id,
+      },
+    });
 
     return NextResponse.json({
+      fileId: fileRecord.id,
       filename,
       originalName: file.name,
-      url,
+      url: `/api/download/${fileRecord.id}`,
       size: file.size,
       contentType: file.type,
     });
