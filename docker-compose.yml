@@ -90,8 +90,9 @@ services:
     image: postgres:16-alpine
     container_name: edu-platform-db
     restart: unless-stopped
-    ports:
-      - "5432:5432"
+    # DB is internal-only: the app connects via the docker network.
+    # Do NOT publish 5432 — an exposed Postgres on a public server gets
+    # brute-forced by bots. Use an SSH tunnel for manual access.
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -119,8 +120,9 @@ services:
     container_name: edu-platform-minio
     restart: unless-stopped
     ports:
-      # MinIO web console for admin management
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      # MinIO web console, loopback-only — reach it via an SSH tunnel:
+      #   ssh -L 9001:127.0.0.1:9001 root@<server>
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
       # S3 API port — files stream through app server, not exposed publicly
       # Uncomment below only if direct MinIO access is needed:
       # - "${MINIO_PORT:-9000}:9000"
