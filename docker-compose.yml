@@ -71,7 +71,7 @@ services:
     container_name: edu-platform-nginx
     restart: unless-stopped
     ports:
-      - "81:80"
+      - "127.0.0.1:81:80"
       # Uncomment after adding SSL certificate:
       # - "443:443"
     volumes:
@@ -116,7 +116,7 @@ services:
   # MinIO  (S3-compatible object storage)
   # ──────────────────────────────────────────────
   minio:
-    image: minio/minio
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: edu-platform-minio
     restart: unless-stopped
     ports:
